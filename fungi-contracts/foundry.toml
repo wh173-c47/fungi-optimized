@@ -1,0 +1,36 @@
+[profile.default]
+  solc_version = "0.8.25"
+  evm_version = "paris" # Cancun will be tested in the CI.
+  auto_detect_solc = false
+  optimizer = true
+  optimizer_runs = 1_000
+  gas_limit = 100_000_000
+  src = "src"
+  out = "out"
+  libs = ["lib"]
+
+[profile.remappings]
+  solady = "lib/solady"
+
+
+[fmt]
+  line_length = 80
+
+[etherscan]
+  base = { key = "${API_KEY_BASESCAN}" }
+  mainnet = { key = "${API_KEY_ETHERSCAN}" }
+  arbitrum = { key = "${API_KEY_ARBISCAN}" }
+  bnb_smart_chain = { key = "${API_KEY_BSCSCAN}" }
+  optimism = { key = "${API_KEY_OPTIMISTIC_ETHERSCAN}" }
+  polygon = { key = "${API_KEY_POLYGONSCAN}" }
+  sepolia = { key = "${API_KEY_ETHERSCAN}" }
+
+
+[rpc_endpoints]
+  base = { key = "${BASE_RPC}" }
+  mainnet = { key = "${ETHEREUM_RPC}" }
+  arbitrum = { key = "${ARBITRUM_RPC}" }
+  bnb_smart_chain = { key = "${BSC_RPC}" }
+  optimism = { key = "${OPTIMISM_RPC}" }
+  polygon = { key = "${POLYGON_RPC}" }
+  sepolia = { key = "${SEPOLIA_RPC}" }

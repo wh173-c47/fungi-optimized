@@ -1,0 +1,6 @@
+[submodule "fungi-contracts/lib/forge-std"]
+	path = fungi-contracts/lib/forge-std
+	url = https://github.com/foundry-rs/forge-std
+[submodule "fungi-contracts/lib/solady"]
+	path = fungi-contracts/lib/solady
+	url = https://github.com/Vectorized/solady
