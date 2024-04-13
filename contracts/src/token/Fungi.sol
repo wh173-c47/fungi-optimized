@@ -5,6 +5,7 @@ import {ERC20, PoolCreatableErc20i} from "./PoolCreatableErc20i.sol";
 import {Generator} from "../Generator.sol";
 import {ExtraSeedLib} from "../lib/ExtraSeedLib.sol";
 import {SeedData} from "../lib/Types.sol";
+import "forge-std/console.sol";
 
 abstract contract Mushrooms is PoolCreatableErc20i {
     using ExtraSeedLib for address;
@@ -40,10 +41,10 @@ abstract contract Mushrooms is PoolCreatableErc20i {
         return 18;
     }
 
-    function trySeedTransfer(
+    function _trySeedTransfer(
         address from,
         address to,
-        uint amount
+        uint256 amount
     ) internal {
         uint256 cachedDecimals = decimals();
 
@@ -60,11 +61,14 @@ abstract contract Mushrooms is PoolCreatableErc20i {
                 return;
             }
 
+            console.log("_owns[from][seed]", _owns[from][seed]);
+            console.log("!_owns[to][seed]", !_owns[to][seed]);
+
             // transfer collected mushroom
             if (_owns[from][seed] && !_owns[to][seed]) {
-                SeedData memory data = _ownedTokens[from][
-                                    _ownedTokensIndex[from][seed]
-                    ];
+                SeedData memory data = _ownedTokens
+                    [from]
+                    [_ownedTokensIndex[from][seed]];
                 _removeTokenFromOwnerEnumeration(from, seed);
                 _addTokenToOwnerEnumeration(to, data);
                 emit OnMushroomTransfer(from, to, data);
@@ -76,8 +80,7 @@ abstract contract Mushrooms is PoolCreatableErc20i {
             uint256 fromBalance = balanceOf(from);
             // transfer spores
             uint32 lastBalanceFromSeed = uint32(fromBalance / (10 ** cachedDecimals));
-            uint32 newBalanceFromSeed = uint32((fromBalance - amount) /
-                (10 ** cachedDecimals));
+            uint32 newBalanceFromSeed = lastBalanceFromSeed - seed;
 
             _removeSeedCount(from, lastBalanceFromSeed - newBalanceFromSeed);
             _addSeedCount(to, seed);
@@ -172,7 +175,7 @@ abstract contract Mushrooms is PoolCreatableErc20i {
         return seed;
     }
 
-    function isOwnerOf(address owner, uint seed) external view returns (bool) {
+    function isOwnerOf(address owner, uint256 seed) external view returns (bool) {
         return _owns[owner][seed];
     }
 
@@ -206,26 +209,46 @@ contract Fungi is Mushrooms, Generator {
     error MaxBuy();
     error NotStarted();
 
-    uint256 constant _startTotalSupply = 210e6 * (10 ** 18);
-    uint256 constant _startMaxBuyCount = (_startTotalSupply * 5) / 10000;
-    uint256 constant _addMaxBuyPercentPerSec = 5; // 100%=_addMaxBuyPrecesion add 0.005%/second
-    uint256 constant _addMaxBuyPrecesion = 100000;
+    uint256 private constant _START_TOTAL_SUPPLY = 210e6 * (10 ** 18);
+    uint256 private constant _START_MAX_BUY_COUNT = (_START_TOTAL_SUPPLY * 5) / 10000;
+    uint256 private constant _ADD_MAX_BUY_PERCENT_PER_SEC = 5; // 100%=_ADD_MAX_BUY_PRECISION add 0.005%/second
+    uint256 private constant _ADD_MAX_BUY_PRECISION = 100000;
 
     constructor() {
-        _mint(msg.sender, _startTotalSupply);
+        _mint(msg.sender, _START_TOTAL_SUPPLY);
     }
 
     function maxBuy() public view returns (uint256) {
-        uint256 startSupply = _startTotalSupply;
+        uint256 startSupply = _START_TOTAL_SUPPLY;
 
         if (!_isStarted()) return startSupply;
-        uint256 count = _startMaxBuyCount +
+
+        uint256 count = _START_MAX_BUY_COUNT +
             (startSupply *
             (block.timestamp - _startTime) *
-                _addMaxBuyPercentPerSec) /
-            _addMaxBuyPrecesion;
+                _ADD_MAX_BUY_PERCENT_PER_SEC) /
+            _ADD_MAX_BUY_PRECISION;
         if (count > startSupply) count = startSupply;
         return count;
+    }
+
+    function transfer(
+        address to,
+        uint256 amount
+    ) public override returns (bool) {
+        _transfer(msg.sender, to, amount);
+
+        return true;
+    }
+
+    function transferFrom(
+        address from,
+        address to,
+        uint256 amount
+    ) public override returns (bool) {
+        _transfer(from, to, amount);
+
+        return true;
     }
 
     function _transfer(
@@ -234,9 +257,9 @@ contract Fungi is Mushrooms, Generator {
         uint256 amount
     ) internal override {
         if (_isStarted()) {
-            trySeedTransfer(from, to, amount);
+            _trySeedTransfer(from, to, amount);
         } else {
-            if (!(from == _owner && to == _owner)) revert NotStarted();
+            if (!(from == _owner || to == _owner)) revert NotStarted();
         }
 
         // allow burning
@@ -256,7 +279,7 @@ contract Fungi is Mushrooms, Generator {
             return;
         } else {
             if (from == _pool) {
-                buy(to, amount);
+                _buy(to, amount);
                 return;
             }
         }
@@ -264,7 +287,7 @@ contract Fungi is Mushrooms, Generator {
         super._transfer(from, to, amount);
     }
 
-    function buy(
+    function _buy(
         address to,
         uint256 amount
     ) private {
@@ -278,6 +301,6 @@ contract Fungi is Mushrooms, Generator {
     }
 
     function burnCount() public view returns (uint256) {
-        return _startTotalSupply - totalSupply();
+        return _START_TOTAL_SUPPLY - totalSupply();
     }
 }

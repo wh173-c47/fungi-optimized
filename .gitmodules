@@ -4,3 +4,6 @@
 [submodule "fungi-contracts/lib/solady"]
 	path = fungi-contracts/lib/solady
 	url = https://github.com/Vectorized/solady
+[submodule "contracts/lib/solady"]
+	path = contracts/lib/solady
+	url = https://github.com/vectorized/solady

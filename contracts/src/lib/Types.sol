@@ -36,7 +36,7 @@ struct ColorsData {
 }
 
 struct SeedData {
-    uint32 seed;
+    uint32 seed; // enough for a supply of max 4,294,967,295
     uint128 extra;
 }
 
