@@ -1,8 +1,10 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.20;
+pragma solidity ^0.8.25;
 
 contract Ownable {
-    address _owner;
+    error NotOwner();
+
+    address internal _owner;
 
     event RenounceOwnership();
 
@@ -10,21 +12,25 @@ contract Ownable {
         _owner = msg.sender;
     }
 
-    modifier onlyOwner() {
-        require(_owner == msg.sender, "only owner");
-        _;
-    }
-
     function owner() external view virtual returns (address) {
         return _owner;
     }
 
-    function ownerRenounce() public onlyOwner {
+    function ownerRenounce() public {
+        _onlyOwner();
+
         _owner = address(0);
+
         emit RenounceOwnership();
     }
 
-    function transferOwnership(address newOwner) external onlyOwner {
+    function transferOwnership(address newOwner) external {
+        _onlyOwner();
+
         _owner = newOwner;
+    }
+
+    function _onlyOwner() internal view {
+        if (_owner != msg.sender) revert NotOwner();
     }
 }

@@ -1,0 +1,17 @@
+[profile.default]
+  solc_version = "0.8.25"
+  evm_version = "paris" # Cancun will be tested in the CI.
+  auto_detect_solc = false
+  optimizer = true
+  optimizer_runs = 1_000
+  gas_limit = 100_000_000
+  src = "src"
+  out = "out"
+  libs = ["lib"]
+
+[profile.remappings]
+  solady = "lib/solady"
+
+
+[fmt]
+  line_length = 80
