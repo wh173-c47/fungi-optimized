@@ -5,7 +5,6 @@ import {ERC20, PoolCreatableErc20i} from "./PoolCreatableErc20i.sol";
 import {Generator} from "../Generator.sol";
 import {ExtraSeedLib} from "../lib/ExtraSeedLib.sol";
 import {SeedData} from "../lib/Types.sol";
-import "forge-std/console.sol";
 
 abstract contract Mushrooms is PoolCreatableErc20i {
     using ExtraSeedLib for address;
@@ -60,9 +59,6 @@ abstract contract Mushrooms is PoolCreatableErc20i {
                 emit OnMushroomTransfer(from, to, data);
                 return;
             }
-
-            console.log("_owns[from][seed]", _owns[from][seed]);
-            console.log("!_owns[to][seed]", !_owns[to][seed]);
 
             // transfer collected mushroom
             if (_owns[from][seed] && !_owns[to][seed]) {

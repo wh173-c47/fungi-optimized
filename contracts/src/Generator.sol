@@ -19,14 +19,14 @@ string constant _WEB = "https://fungifungi.art/";
 
 contract Generator is Ownable {
     using LayersLib for mapping(uint256 => mapping(uint256 => Rect[]));
-    using LayersLib for mapping(uint256 => bytes8[]);
+    using LayersLib for mapping(uint256 => bytes6[]);
     using LayersLib for uint256;
     using LayersLib for uint8;
     using StringLib for uint8;
     using RectLib for Rect;
     using RectLib for Rect[];
     using RandLib for Rand;
-    using RandLib for bytes8[];
+    using RandLib for bytes6[];
 
     uint8 private _sporesCount = 7;
     uint8[_LEVELS_COUNT] private _stemLevelCounts = [5, 5, 5, 6, 10];
@@ -39,8 +39,8 @@ contract Generator is Ownable {
     mapping(uint256 => mapping(uint256 => Rect[])) private _dots;
     mapping(uint256 => Rect[]) private _grounds;
 
-    bytes8[] private _backgroundColors0 = [
-        bytes8("000000"),
+    bytes6[] private _backgroundColors0 = [
+        bytes6("000000"),
         "493114",
         "1d772f",
         "38166a",
@@ -56,8 +56,8 @@ contract Generator is Ownable {
         "fddad5"
     ];
 
-    bytes8[] private _backgroundColors1 = [
-        bytes8("453879"),
+    bytes6[] private _backgroundColors1 = [
+        bytes6("453879"),
         "184b5b",
         "447f60",
         "e35100",
@@ -71,8 +71,8 @@ contract Generator is Ownable {
         "ca90ff"
     ];
 
-    bytes8[] private _backgroundColors2 = [
-        bytes8("231b32"),
+    bytes6[] private _backgroundColors2 = [
+        bytes6("231b32"),
         "3f1164",
         "28426a",
         "9a2079",
@@ -84,8 +84,8 @@ contract Generator is Ownable {
         "e3b2ff"
     ];
 
-    bytes8[] private _backgroundColors3 = [
-        bytes8("291970"),
+    bytes6[] private _backgroundColors3 = [
+        bytes6("291970"),
         "413c5d",
         "a44c4c",
         "f8972a",
@@ -95,8 +95,8 @@ contract Generator is Ownable {
         "ffb2a7"
     ];
 
-    bytes8[] private _backgroundColors4 = [
-        bytes8("0f0c45"),
+    bytes6[] private _backgroundColors4 = [
+        bytes6("0f0c45"),
         "560e43",
         "b21030",
         "ff6e69",
@@ -104,8 +104,8 @@ contract Generator is Ownable {
         "7cb8ff"
     ];
 
-    bytes8[] private _groundColors0 = [
-        bytes8("000000"),
+    bytes6[] private _groundColors0 = [
+        bytes6("000000"),
         "1d730e",
         "525050",
         "b21030",
@@ -122,8 +122,8 @@ contract Generator is Ownable {
         "e3b2ff"
     ];
 
-    bytes8[] private _groundColors1 = [
-        bytes8("020104"),
+    bytes6[] private _groundColors1 = [
+        bytes6("020104"),
         "493114",
         "74254d",
         "453879",
@@ -137,8 +137,8 @@ contract Generator is Ownable {
         "f7e2c5"
     ];
 
-    bytes8[] private _groundColors2 = [
-        bytes8("495900"),
+    bytes6[] private _groundColors2 = [
+        bytes6("495900"),
         "395844",
         "d47642",
         "719767",
@@ -150,8 +150,8 @@ contract Generator is Ownable {
         "c3b2ff"
     ];
 
-    bytes8[] private _groundColors3 = [
-        bytes8("253d2d"),
+    bytes6[] private _groundColors3 = [
+        bytes6("253d2d"),
         "515130",
         "384f7a",
         "49a269",
@@ -161,8 +161,8 @@ contract Generator is Ownable {
         "ffffff"
     ];
 
-    bytes8[] private _groundColors4 = [
-        bytes8("663a13"),
+    bytes6[] private _groundColors4 = [
+        bytes6("663a13"),
         "137d5a",
         "974700",
         "49aa10",
@@ -170,8 +170,8 @@ contract Generator is Ownable {
         "ade151"
     ];
 
-    bytes8[] private _mushroomColors0 = [
-        bytes8("000000"),
+    bytes6[] private _mushroomColors0 = [
+        bytes6("000000"),
         "1d730e",
         "525050",
         "b21030",
@@ -188,8 +188,8 @@ contract Generator is Ownable {
         "e3b2ff"
     ];
 
-    bytes8[] private _mushroomColors1 = [
-        bytes8("020104"),
+    bytes6[] private _mushroomColors1 = [
+        bytes6("020104"),
         "493114",
         "74254d",
         "453879",
@@ -203,8 +203,8 @@ contract Generator is Ownable {
         "f7e2c5"
     ];
 
-    bytes8[] private _mushroomColors2 = [
-        bytes8("495900"),
+    bytes6[] private _mushroomColors2 = [
+        bytes6("495900"),
         "395844",
         "d47642",
         "719767",
@@ -216,8 +216,8 @@ contract Generator is Ownable {
         "c3b2ff"
     ];
 
-    bytes8[] private _mushroomColors3 = [
-        bytes8("253d2d"),
+    bytes6[] private _mushroomColors3 = [
+        bytes6("253d2d"),
         "515130",
         "384f7a",
         "49a269",
@@ -227,8 +227,8 @@ contract Generator is Ownable {
         "ffffff"
     ];
 
-    bytes8[] private _mushroomColors4 = [
-        bytes8("663a13"),
+    bytes6[] private _mushroomColors4 = [
+        bytes6("663a13"),
         "137d5a",
         "974700",
         "49aa10",
@@ -358,7 +358,7 @@ contract Generator is Ownable {
 
     function _backgroundColors(
         uint256 index
-    ) private view returns (bytes8[] storage) {
+    ) private view returns (bytes6[] storage) {
         if (index == 0) return _backgroundColors0;
         if (index == 1) return _backgroundColors1;
         if (index == 2) return _backgroundColors2;
@@ -369,7 +369,7 @@ contract Generator is Ownable {
 
     function _groundColors(
         uint256 index
-    ) private view returns (bytes8[] storage) {
+    ) private view returns (bytes6[] storage) {
         if (index == 0) return _groundColors0;
         if (index == 1) return _groundColors1;
         if (index == 2) return _groundColors2;
@@ -380,7 +380,7 @@ contract Generator is Ownable {
 
     function _mushroomColors(
         uint256 index
-    ) private view returns (bytes8[] storage) {
+    ) private view returns (bytes6[] storage) {
         if (index == 0) return _mushroomColors0;
         if (index == 1) return _mushroomColors1;
         if (index == 2) return _mushroomColors2;

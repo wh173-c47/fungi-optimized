@@ -33,14 +33,14 @@ library RandLib {
     }
 
     function random(
-        bytes8[] memory data,
+        bytes6[] memory data,
         Rand memory rnd
-    ) internal pure returns (bytes8) {
+    ) internal pure returns (bytes6) {
         return data[randomIndex(data, rnd)];
     }
 
     function randomIndex(
-        bytes8[] memory data,
+        bytes6[] memory data,
         Rand memory rnd
     ) internal pure returns (uint256) {
         return next(rnd) % data.length;

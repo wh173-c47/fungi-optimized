@@ -136,7 +136,7 @@ contract FungiTest is Test {
         assertNotEq(afterFrom.extra, beforeFrom.extra);
     }
 
-    function testTransferDoesNothingIfTransferringZeroToken(uint256 amount) public {
+    function testTransferDoesNothingIfTransferringZeroToken() public {
         fungi.launch(PAIR);
 
         fungi.transfer(RDM_ACCOUNT, _START_TOTAL_SUPPLY);
@@ -173,6 +173,8 @@ contract FungiTest is Test {
         fungi.transfer(RDM_ACCOUNT2, amount);
 
         SeedData memory mushroomData = fungi.mushroomOfOwnerByIndex(RDM_ACCOUNT2, 0);
+
+        console.log(fungi.getMeta(mushroomData));
 
         assertEq(fungi.mushroomCount(RDM_ACCOUNT), 0);
         assertEq(fungi.mushroomCount(RDM_ACCOUNT2), 1);
@@ -246,10 +248,4 @@ contract FungiTest is Test {
         fungi.transfer(RDM_ACCOUNT, _START_TOTAL_SUPPLY);
         vm.stopPrank();
     }
-
-
-//    function testFuzz_SetNumber(uint256 x) public {
-//        counter.setNumber(x);
-//        assertEq(counter.number(), x);
-//    }
 }

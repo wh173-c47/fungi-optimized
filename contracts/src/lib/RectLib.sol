@@ -9,12 +9,12 @@ import {StringLib} from "./StringLib.sol";
 library RectLib {
     using RectLib for Rect;
     using RandLib for Rand;
-    using RandLib for bytes8[];
+    using RandLib for bytes6[];
     using StringLib for uint8;
 
     function toSvg(
         Rect memory r,
-        bytes8 color
+        bytes6 color
     ) internal pure returns (string memory) {
         return
             string(
@@ -36,7 +36,7 @@ library RectLib {
 
     function toSvg(
         Rect[] storage rects,
-        bytes8[] storage colors,
+        bytes6[] storage colors,
         Rand memory rnd
     ) internal view returns (string memory) {
         string memory res;
@@ -50,7 +50,7 @@ library RectLib {
 
     function toSvg(
         Rect[] storage rects,
-        bytes8 color
+        bytes6 color
     ) internal view returns (string memory) {
         string memory res;
         for (uint256 i = 0; i < rects.length; ++i) {
