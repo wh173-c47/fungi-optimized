@@ -3,7 +3,6 @@ pragma solidity ^0.8.25;
 
 import {Test, console} from "forge-std/Test.sol";
 import {Fungi, SeedData} from "../src/token/Fungi.sol";
-import "forge-std/console.sol";
 
 contract FungiTest is Test {
     error AlreadyStarted();
@@ -173,8 +172,6 @@ contract FungiTest is Test {
         fungi.transfer(RDM_ACCOUNT2, amount);
 
         SeedData memory mushroomData = fungi.mushroomOfOwnerByIndex(RDM_ACCOUNT2, 0);
-
-        console.log(fungi.getMeta(mushroomData));
 
         assertEq(fungi.mushroomCount(RDM_ACCOUNT), 0);
         assertEq(fungi.mushroomCount(RDM_ACCOUNT2), 1);

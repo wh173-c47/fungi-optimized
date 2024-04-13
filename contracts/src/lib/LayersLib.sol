@@ -8,7 +8,9 @@ library LayersLib {
         mapping(uint256 => mapping(uint256 => Rect[])) storage rects,
         FileData[] calldata data
     ) internal {
-        for (uint256 i = 0; i < data.length; ++i) {
+        uint256 max = data.length;
+
+        for (uint256 i = 0; i < max; ++i) {
             setFile(rects, data[i]);
         }
     }
@@ -18,7 +20,9 @@ library LayersLib {
         FileData calldata input
     ) internal {
         Rect[] storage storageFile = rects[input.lvl][input.file];
-        for (uint256 i = 0; i < input.rects.length; ++i) {
+        uint256 max = input.rects.length;
+
+        for (uint256 i = 0; i < max; ++i) {
             storageFile.push(input.rects[i]);
         }
     }
@@ -32,6 +36,7 @@ library LayersLib {
 
     function toLvl1(uint8 l) internal pure returns (uint8) {
         if (l > 0) --l;
+
         return l;
     }
 }

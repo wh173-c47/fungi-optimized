@@ -278,15 +278,19 @@ contract Generator is Ownable {
     ) external view returns (MushroomData memory) {
         Rand memory rnd = Rand(seedData.seed, 0, seedData.extra);
         MushroomData memory data;
+
         data.lvl = rnd.lvl();
+
         _setBcGround(data, rnd);
         _setGround(data, rnd);
+
         if (data.lvl == 0) {
             _setSpores(data, rnd);
         } else {
             _setStem(data, rnd);
             _setCap(data, rnd);
         }
+
         return data;
     }
 
@@ -364,6 +368,7 @@ contract Generator is Ownable {
         if (index == 2) return _backgroundColors2;
         if (index == 3) return _backgroundColors3;
         if (index == 4) return _backgroundColors4;
+
         return _backgroundColors0;
     }
 
@@ -375,6 +380,7 @@ contract Generator is Ownable {
         if (index == 2) return _groundColors2;
         if (index == 3) return _groundColors3;
         if (index == 4) return _groundColors4;
+
         return _groundColors0;
     }
 
@@ -386,6 +392,7 @@ contract Generator is Ownable {
         if (index == 2) return _mushroomColors2;
         if (index == 3) return _mushroomColors3;
         if (index == 4) return _mushroomColors4;
+
         return _mushroomColors0;
     }
     
@@ -415,6 +422,7 @@ contract Generator is Ownable {
         data.cap = uint8(rnd.next() % _capLevelCounts[rnd.lvl().toLvl1()]);
         data.capColor = _mushroomColors(rnd.lvl().toLvl1()).random(rnd);
         data.hasDots = rnd.next() % 4 == 0;
+
         if (data.hasDots) {
             data.dotsColor = _mushroomColors(rnd.lvl().toLvl1()).random(rnd);
         }
@@ -463,6 +471,7 @@ contract Generator is Ownable {
         MushroomData memory data
     ) private pure returns (string memory) {
         Rect memory r = Rect(0, 0, _PIXELS_COUNT, _PIXELS_COUNT);
+
         return r.toSvg(data.background);
     }
 
@@ -476,6 +485,7 @@ contract Generator is Ownable {
         MushroomData memory data
     ) private view returns (string memory) {
         if (data.lvl == 0) return _spores[data.stem].toSvg(data.stemColor);
+
         return _stems[data.lvl.toLvl1()][data.stem].toSvg(data.stemColor);
     }
 
@@ -485,10 +495,12 @@ contract Generator is Ownable {
         string memory cap = _caps[data.lvl.toLvl1()][data.cap].toSvg(
             data.capColor
         );
+
         if (data.hasDots) {
             string memory _dotsSvg = _dots[data.lvl.toLvl1()][data.cap].toSvg(
                 data.dotsColor
             );
+
             return string(abi.encodePacked(cap, _dotsSvg));
         } else {
             return string(cap);
