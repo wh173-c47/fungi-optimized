@@ -10,7 +10,7 @@ library LayersLib {
     ) internal {
         uint256 max = data.length;
 
-        for (uint256 i = 0; i < max; ++i) {
+        for (uint256 i; i < max; ++i) {
             setFile(rects, data[i]);
         }
     }
@@ -22,7 +22,7 @@ library LayersLib {
         Rect[] storage storageFile = rects[input.lvl][input.file];
         uint256 max = input.rects.length;
 
-        for (uint256 i = 0; i < max; ++i) {
+        for (uint256 i; i < max; ++i) {
             storageFile.push(input.rects[i]);
         }
     }

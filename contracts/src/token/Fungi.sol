@@ -50,8 +50,9 @@ abstract contract Mushrooms is PoolCreatableErc20i {
         if (from == address(this)) return;
 
         uint32 seed = uint32(amount / (10 ** cachedDecimals));
+        address cachedPool = _pool;
 
-        if (seed > 0 && from != _pool && to != _pool) {
+        if (seed > 0 && from != cachedPool && to != cachedPool) {
             // transfer growing mushroom
             if (_spores[from].seed == seed) {
                 SeedData memory data = _spores[from];
@@ -94,11 +95,9 @@ abstract contract Mushrooms is PoolCreatableErc20i {
         if (account == _pool) return;
 
         SeedData memory last = _spores[account];
-
         uint32 nextSeed = last.seed + seed;
 
-        _spores[account].seed = nextSeed;
-        _spores[account].extra = account.extra(++_randomNonce);
+        _spores[account] = SeedData(nextSeed, account.extra(++_randomNonce));
 
         if (last.seed == 0 && nextSeed > 0) ++_sporesTotalCount;
 
@@ -111,19 +110,24 @@ abstract contract Mushrooms is PoolCreatableErc20i {
 
         SeedData memory lastSpores = _spores[account];
 
-        if (_spores[account].seed >= seed) {
-            _spores[account].seed -= seed;
-            _spores[account].extra = account.extra(++_randomNonce);
+        if (lastSpores.seed >= seed) {
+            uint32 earlyNextSeed = lastSpores.seed - seed;
+            SeedData memory earlyNextSeedData = SeedData(
+                earlyNextSeed,
+                account.extra(++_randomNonce)
+            );
 
-            if (lastSpores.seed > 0 && _spores[account].seed == 0)
+            _spores[account] = earlyNextSeedData;
+
+            if (lastSpores.seed > 0 && earlyNextSeed == 0)
                 --_sporesTotalCount;
 
-            emit OnSporesShrink(account, _spores[account]);
+            emit OnSporesShrink(account, earlyNextSeedData);
 
             return;
         }
 
-        uint32 seedRemains = seed - _spores[account].seed;
+        uint32 seedRemains = seed - lastSpores.seed;
 
         // remove mushrooms
         uint256 count = _counts[account];
@@ -138,6 +142,7 @@ abstract contract Mushrooms is PoolCreatableErc20i {
         }
 
         uint96 nextRdmNonce;
+        uint32 nextSeed;
 
         if (removed > seedRemains) {
             // Allows rdm nonce OF
@@ -145,23 +150,28 @@ abstract contract Mushrooms is PoolCreatableErc20i {
                 nextRdmNonce = _randomNonce + 2;
             }
 
-            _spores[account].seed += removed - seedRemains;
+            nextSeed = lastSpores.seed + (removed - seedRemains);
         } else {
             // Allows rdm nonce OF
             unchecked {
                 nextRdmNonce = _randomNonce + 1;
             }
 
-            _spores[account].seed = 0;
+            nextSeed = 0;
         }
 
-        _spores[account].extra = account.extra(nextRdmNonce);
+        SeedData memory nextSeedData = SeedData(
+            nextSeed,
+            account.extra(nextRdmNonce)
+        );
+
+        _spores[account] = nextSeedData;
         _randomNonce = nextRdmNonce;
 
-        if (lastSpores.seed > 0 && _spores[account].seed == 0)
+        if (lastSpores.seed > 0 && nextSeed == 0)
             --_sporesTotalCount;
 
-        emit OnSporesShrink(account, _spores[account]);
+        emit OnSporesShrink(account, nextSeedData);
     }
 
     function _addTokenToOwnerEnumeration(
@@ -170,10 +180,12 @@ abstract contract Mushrooms is PoolCreatableErc20i {
     ) private {
         if (to == _pool) return;
 
-        ++_counts[to];
+        uint256 cachedCount = _counts[to];
+
+        _counts[to] = cachedCount + 1;
         ++_mushroomsTotalCount;
 
-        uint256 length = _counts[to] - 1;
+        uint256 length = cachedCount;
 
         _ownedTokens[to][length] = data;
         _ownedTokensIndex[to][data.seed] = length;
@@ -183,11 +195,13 @@ abstract contract Mushrooms is PoolCreatableErc20i {
     function _removeTokenFromOwnerEnumeration(address from, uint32 seed) private {
         if (from == _pool) return;
 
-        --_counts[from];
+        uint256 nextCount = _counts[from] - 1;
+
+        _counts[from] = nextCount;
         --_mushroomsTotalCount;
         _owns[from][seed] = false;
 
-        uint256 lastTokenIndex = _counts[from];
+        uint256 lastTokenIndex = nextCount;
         uint256 tokenIndex = _ownedTokensIndex[from][seed];
         SeedData memory data = _ownedTokens[from][tokenIndex];
 

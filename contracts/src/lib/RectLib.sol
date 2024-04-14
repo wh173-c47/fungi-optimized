@@ -40,11 +40,14 @@ library RectLib {
         Rand memory rnd
     ) internal view returns (string memory) {
         string memory res;
-        for (uint256 i = 0; i < rects.length; ++i) {
+        uint max = rects.length;
+
+        for (uint256 i; i < max; ++i) {
             res = string(
                 abi.encodePacked(res, rects[i].toSvg(colors.random(rnd)))
             );
         }
+
         return res;
     }
 
@@ -53,9 +56,12 @@ library RectLib {
         bytes6 color
     ) internal view returns (string memory) {
         string memory res;
-        for (uint256 i = 0; i < rects.length; ++i) {
+        uint max = rects.length;
+
+        for (uint256 i = 0; i < max; ++i) {
             res = string(abi.encodePacked(res, rects[i].toSvg(color)));
         }
+
         return res;
     }
 }

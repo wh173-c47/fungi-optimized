@@ -246,10 +246,12 @@ contract Generator is Ownable {
     function _setSpores(FileData[] calldata data) external {
         _onlyOwner();
 
-        for (uint256 i = 0; i < data.length; ++i) {
+        for (uint256 i; i < data.length; ++i) {
             FileData memory file = data[i];
             Rect[] storage storageFile = _spores[file.file];
-            for (uint256 j = 0; j < file.rects.length; ++j) {
+            uint256 max = file.rects.length;
+
+            for (uint256 j; j < max; ++j) {
                 storageFile.push(file.rects[j]);
             }
         }
