@@ -10,7 +10,7 @@ contract ERC20 is Context, IERC20, IERC20Metadata {
     mapping(address => mapping(address => uint256)) private _allowances;
 
     uint256 internal _totalSupply;
-    uint8 internal constant _decimals = 9;
+    uint8 internal constant _decimals = 18;
 
     string private _name;
     string private _symbol;

@@ -16,6 +16,8 @@ contract FungiOldOldTest is Test {
 
     function setUp() public {
         fungi = new FungiOld();
+
+        assertEq(_START_TOTAL_SUPPLY, fungi.balanceOf(address(this)));
     }
 
     function testLaunchIsPairCreatorPass() public {
@@ -83,11 +85,11 @@ contract FungiOldOldTest is Test {
     }
 
     function testTransferToZeroAddrBurnPass(uint256 amount) public {
-//        vm.assume(amount < _START_TOTAL_SUPPLY && amount > 0);
-//
-//        fungi.transfer(address(0x0), amount);
-//
-//        assertEq(fungi.burnCount(), amount);
+        vm.assume(amount < _START_TOTAL_SUPPLY && amount > 0);
+
+        fungi.transfer(address(0x0), amount);
+
+        assertEq(fungi.burnCount(), amount);
     }
 
     function testTransferToContractAddrSuperTransferPass() public {
@@ -124,8 +126,9 @@ contract FungiOldOldTest is Test {
         SeedData memory afterFrom = fungi.sporesDegree(RDM_ACCOUNT);
         SeedData memory afterTo = fungi.sporesDegree(RDM_ACCOUNT2);
 
-//        assertEq(afterTo.seed, amountPlain);
-//        assertNotEq(afterTo.extra, 0);
+        assertEq(afterTo.seed, amountPlain);
+        assertNotEq(afterTo.extra, 0);
+        // TODO: See why original contract test is failing here
 //        assertEq(afterFrom.seed, beforeFrom.seed - amountPlain);
 //        assertNotEq(afterFrom.extra, beforeFrom.extra);
     }

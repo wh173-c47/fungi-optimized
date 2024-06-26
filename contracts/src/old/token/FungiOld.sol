@@ -21,7 +21,6 @@ library ExtraSeedLibrary {
 
 abstract contract Mushrooms is PoolCreatableErc20i {
     using ExtraSeedLibrary for address;
-    uint256 private constant _START_TOTAL_SUPPLY = 210e6 * (10 ** 18);
     mapping(address owner => uint) _counts;
     mapping(address owner => mapping(uint index => SeedData seed_data)) _ownedTokens;
     mapping(address owner => mapping(uint tokenId => uint)) _ownedTokensIndex;
@@ -41,9 +40,7 @@ abstract contract Mushrooms is PoolCreatableErc20i {
     event OnSporesGrow(address indexed holder, SeedData seed_data);
     event OnSporesShrink(address indexed holder, SeedData seed_data);
 
-    constructor() PoolCreatableErc20i("Fungi", "FUNGI", msg.sender) {
-        _mint(msg.sender, _START_TOTAL_SUPPLY);
-    }
+    constructor() PoolCreatableErc20i("Fungi", "FUNGI", msg.sender) {}
 
     modifier holder_calculate(address acc1, address acc2) {
         bool before1 = _isHolder(acc1);
