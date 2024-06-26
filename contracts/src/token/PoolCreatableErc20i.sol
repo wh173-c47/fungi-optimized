@@ -7,29 +7,33 @@ abstract contract PoolCreatableErc20i is ERC20 {
     error NotPairCreator();
     error AlreadyStarted();
 
-    address internal _pool;
-    uint64 internal _startTime;
-
     address internal immutable _pairCreator;
+
+    address public pool;
     bool internal _feeLocked;
+    uint256 internal _startTime;
 
     constructor(address pairCreator) payable {
         _pairCreator = pairCreator;
     }
 
     function launch(address poolAddress) external payable {
-        if (msg.sender != _pairCreator) revert NotPairCreator();
-        if (_isStarted()) revert AlreadyStarted();
+        address pairCreator = _pairCreator;
 
-        _pool = poolAddress;
-        _startTime = uint64(block.timestamp);
-    }
+        assembly {
+            // We reduce a bit bytecode by packing reverts err codes in mem as this fn won't be much triggered
+            mstore(returndatasize(), 0x189117a41fbde445) // packed NotPairCreator() and AlreadyStarted()
 
-    function pool() external view returns (address) {
-        return _pool;
-    }
+            if iszero(eq(caller(), pairCreator)) {
+                revert(0x18, 0x4) // NotPairCreator()
+            }
 
-    function _isStarted() internal view returns (bool) {
-        return _pool != address(0);
+            if gt(sload(pool.slot), returndatasize()) {
+                revert(0x1c, 0x4) // AlreadyStarted()
+            }
+        }
+
+        _startTime = block.timestamp;
+        pool = poolAddress;
     }
 }

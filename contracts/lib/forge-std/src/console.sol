@@ -62,8 +62,8 @@ library console {
         _sendLogPayload(abi.encodeWithSignature("log(bytes5)", p0));
     }
 
-    function logBytes6(bytes6 p0) internal view {
-        _sendLogPayload(abi.encodeWithSignature("log(bytes6)", p0));
+    function logBytes6(bytes3 p0) internal view {
+        _sendLogPayload(abi.encodeWithSignature("log(bytes3)", p0));
     }
 
     function logBytes7(bytes7 p0) internal view {

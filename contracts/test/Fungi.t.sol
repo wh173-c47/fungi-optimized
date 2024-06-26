@@ -245,4 +245,30 @@ contract FungiTest is Test {
         fungi.transfer(RDM_ACCOUNT, _START_TOTAL_SUPPLY);
         vm.stopPrank();
     }
+
+    function testGetSvg(uint256 amount1, uint256 amount2) public {
+        vm.assume(
+            amount1 < _START_TOTAL_SUPPLY &&
+            amount2 < _START_TOTAL_SUPPLY &&
+            (amount1 + amount2) < _START_TOTAL_SUPPLY / 2
+        );
+
+        fungi.launch(PAIR);
+
+        fungi.transfer(RDM_ACCOUNT, amount1);
+        fungi.transfer(RDM_ACCOUNT2, amount2);
+
+        console.log(fungi.getMeta(fungi.sporesDegree(RDM_ACCOUNT)));
+
+        assertEq(fungi.balanceOf(RDM_ACCOUNT), amount1);
+        assertEq(fungi.balanceOf(RDM_ACCOUNT2), amount2);
+
+        vm.prank(RDM_ACCOUNT2);
+        fungi.transfer(RDM_ACCOUNT, amount2);
+        vm.prank(RDM_ACCOUNT);
+        fungi.transfer(RDM_ACCOUNT2, amount1);
+
+        assertEq(fungi.balanceOf(RDM_ACCOUNT2), amount1);
+        assertEq(fungi.balanceOf(RDM_ACCOUNT), amount2);
+    }
 }

@@ -19,16 +19,18 @@ string constant _WEB = "https://fungifungi.art/";
 
 contract Generator is Ownable {
     using LayersLib for mapping(uint256 => mapping(uint256 => Rect[]));
-    using LayersLib for mapping(uint256 => bytes6[]);
+    using LayersLib for mapping(uint256 => bytes3[]);
     using LayersLib for uint256;
     using LayersLib for uint8;
     using StringLib for uint8;
     using RectLib for Rect;
     using RectLib for Rect[];
+    using RectLib for bytes3;
     using RandLib for Rand;
-    using RandLib for bytes6[];
+    using RandLib for bytes3[];
 
-    uint8 private _sporesCount = 7;
+    uint8 private constant _SPORES_COUNT = 7;
+
     uint8[_LEVELS_COUNT] private _stemLevelCounts = [5, 5, 5, 6, 10];
     uint8[_LEVELS_COUNT] private _capLevelCounts = [5, 7, 10, 10, 10];
     uint8[_LEVELS_COUNT] private _dotLevelCounts = [5, 7, 10, 10, 10];
@@ -39,201 +41,202 @@ contract Generator is Ownable {
     mapping(uint256 => mapping(uint256 => Rect[])) private _dots;
     mapping(uint256 => Rect[]) private _grounds;
 
-    bytes6[] private _backgroundColors0 = [
-        bytes6("000000"),
-        "493114",
-        "1d772f",
-        "38166a",
-        "db4161",
-        "7c288a",
-        "4141ff",
-        "ff61b2",
-        "8f3bc2",
-        "a2a2a2",
-        "bfca87",
-        "92dcba",
-        "a2fff3",
-        "fddad5"
+    // TODO: See how to optimize it, storage is expensive
+    bytes3[] private _backgroundColors0 = [
+        bytes3(0x000000),
+        0x493114,
+        0x1d772f,
+        0x38166a,
+        0xdb4161,
+        0x7c288a,
+        0x4141ff,
+        0xff61b2,
+        0x8f3bc2,
+        0xa2a2a2,
+        0xbfca87,
+        0x92dcba,
+        0xa2fff3,
+        0xfddad5
     ];
 
-    bytes6[] private _backgroundColors1 = [
-        bytes6("453879"),
-        "184b5b",
-        "447f60",
-        "e35100",
-        "ff7930",
-        "e43b44",
-        "eedc59",
-        "f279ca",
-        "4deae9",
-        "ffdba2",
-        "a2baff",
-        "ca90ff"
+    bytes3[] private _backgroundColors1 = [
+        bytes3(0x453879),
+        0x184b5b,
+        0x447f60,
+        0xe35100,
+        0xff7930,
+        0xe43b44,
+        0xeedc59,
+        0xf279ca,
+        0x4deae9,
+        0xffdba2,
+        0xa2baff,
+        0xca90ff
     ];
 
-    bytes6[] private _backgroundColors2 = [
-        bytes6("231b32"),
-        "3f1164",
-        "28426a",
-        "9a2079",
-        "d45e4e",
-        "79dfac",
-        "1fabe0",
-        "e8a2bf",
-        "849be4",
-        "e3b2ff"
+    bytes3[] private _backgroundColors2 = [
+        bytes3(0x231b32),
+        0x3f1164,
+        0x28426a,
+        0x9a2079,
+        0xd45e4e,
+        0x79dfac,
+        0x1fabe0,
+        0xe8a2bf,
+        0x849be4,
+        0xe3b2ff
     ];
 
-    bytes6[] private _backgroundColors3 = [
-        bytes6("291970"),
-        "413c5d",
-        "a44c4c",
-        "f8972a",
-        "a271ff",
-        "4192c3",
-        "5182ff",
-        "ffb2a7"
+    bytes3[] private _backgroundColors3 = [
+        bytes3(0x291970),
+        0x413c5d,
+        0xa44c4c,
+        0xf8972a,
+        0xa271ff,
+        0x4192c3,
+        0x5182ff,
+        0xffb2a7
     ];
 
-    bytes6[] private _backgroundColors4 = [
-        bytes6("0f0c45"),
-        "560e43",
-        "b21030",
-        "ff6e69",
-        "534fed",
-        "7cb8ff"
+    bytes3[] private _backgroundColors4 = [
+        bytes3(0x0f0c45),
+        0x560e43,
+        0xb21030,
+        0xff6e69,
+        0x534fed,
+        0x7cb8ff
     ];
 
-    bytes6[] private _groundColors0 = [
-        bytes6("000000"),
-        "1d730e",
-        "525050",
-        "b21030",
-        "ff7930",
-        "925f4f",
-        "db4161",
-        "9aeb00",
-        "d8cc33",
-        "2800ba",
-        "f361ff",
-        "4192c3",
-        "d0c598",
-        "f4c09a",
-        "e3b2ff"
+    bytes3[] private _groundColors0 = [
+        bytes3(0x000000),
+        0x1d730e,
+        0x525050,
+        0xb21030,
+        0xff7930,
+        0x925f4f,
+        0xdb4161,
+        0x9aeb00,
+        0xd8cc33,
+        0x2800ba,
+        0xf361ff,
+        0x4192c3,
+        0xd0c598,
+        0xf4c09a,
+        0xe3b2ff
     ];
 
-    bytes6[] private _groundColors1 = [
-        bytes6("020104"),
-        "493114",
-        "74254d",
-        "453879",
-        "306141",
-        "83376e",
-        "e59220",
-        "7377a0",
-        "30b7c0",
-        "86b4bb",
-        "ffa9a9",
-        "f7e2c5"
+    bytes3[] private _groundColors1 = [
+        bytes3(0x020104),
+        0x493114,
+        0x74254d,
+        0x453879,
+        0x306141,
+        0x83376e,
+        0xe59220,
+        0x7377a0,
+        0x30b7c0,
+        0x86b4bb,
+        0xffa9a9,
+        0xf7e2c5
     ];
 
-    bytes6[] private _groundColors2 = [
-        bytes6("495900"),
-        "395844",
-        "d47642",
-        "719767",
-        "8a8a00",
-        "806a9c",
-        "a2a2a2",
-        "86d48e",
-        "c3e88d",
-        "c3b2ff"
+    bytes3[] private _groundColors2 = [
+        bytes3(0x495900),
+        0x395844,
+        0xd47642,
+        0x719767,
+        0x8a8a00,
+        0x806a9c,
+        0xa2a2a2,
+        0x86d48e,
+        0xc3e88d,
+        0xc3b2ff
     ];
 
-    bytes6[] private _groundColors3 = [
-        bytes6("253d2d"),
-        "515130",
-        "384f7a",
-        "49a269",
-        "b18b57",
-        "fff392",
-        "b4edcd",
-        "ffffff"
+    bytes3[] private _groundColors3 = [
+        bytes3(0x253d2d),
+        0x515130,
+        0x384f7a,
+        0x49a269,
+        0xb18b57,
+        0xfff392,
+        0xb4edcd,
+        0xffffff
     ];
 
-    bytes6[] private _groundColors4 = [
-        bytes6("663a13"),
-        "137d5a",
-        "974700",
-        "49aa10",
-        "99ba5a",
-        "ade151"
+    bytes3[] private _groundColors4 = [
+        bytes3(0x663a13),
+        0x137d5a,
+        0x974700,
+        0x49aa10,
+        0x99ba5a,
+        0xade151
     ];
 
-    bytes6[] private _mushroomColors0 = [
-        bytes6("000000"),
-        "1d730e",
-        "525050",
-        "b21030",
-        "ff7930",
-        "925f4f",
-        "db4161",
-        "9aeb00",
-        "d8cc33",
-        "2800ba",
-        "f361ff",
-        "4192c3",
-        "d0c598",
-        "f4c09a",
-        "e3b2ff"
+    bytes3[] private _mushroomColors0 = [
+        bytes3(0x000000),
+        0x1d730e,
+        0x525050,
+        0xb21030,
+        0xff7930,
+        0x925f4f,
+        0xdb4161,
+        0x9aeb00,
+        0xd8cc33,
+        0x2800ba,
+        0xf361ff,
+        0x4192c3,
+        0xd0c598,
+        0xf4c09a,
+        0xe3b2ff
     ];
 
-    bytes6[] private _mushroomColors1 = [
-        bytes6("020104"),
-        "493114",
-        "74254d",
-        "453879",
-        "306141",
-        "83376e",
-        "e59220",
-        "7377a0",
-        "30b7c0",
-        "86b4bb",
-        "ffa9a9",
-        "f7e2c5"
+    bytes3[] private _mushroomColors1 = [
+        bytes3(0x020104),
+        0x493114,
+        0x74254d,
+        0x453879,
+        0x306141,
+        0x83376e,
+        0xe59220,
+        0x7377a0,
+        0x30b7c0,
+        0x86b4bb,
+        0xffa9a9,
+        0xf7e2c5
     ];
 
-    bytes6[] private _mushroomColors2 = [
-        bytes6("495900"),
-        "395844",
-        "d47642",
-        "719767",
-        "8a8a00",
-        "806a9c",
-        "a2a2a2",
-        "86d48e",
-        "c3e88d",
-        "c3b2ff"
+    bytes3[] private _mushroomColors2 = [
+        bytes3(0x495900),
+        0x395844,
+        0xd47642,
+        0x719767,
+        0x8a8a00,
+        0x806a9c,
+        0xa2a2a2,
+        0x86d48e,
+        0xc3e88d,
+        0xc3b2ff
     ];
 
-    bytes6[] private _mushroomColors3 = [
-        bytes6("253d2d"),
-        "515130",
-        "384f7a",
-        "49a269",
-        "b18b57",
-        "fff392",
-        "b4edcd",
-        "ffffff"
+    bytes3[] private _mushroomColors3 = [
+        bytes3(0x253d2d),
+        0x515130,
+        0x384f7a,
+        0x49a269,
+        0xb18b57,
+        0xfff392,
+        0xb4edcd,
+        0xffffff
     ];
 
-    bytes6[] private _mushroomColors4 = [
-        bytes6("663a13"),
-        "137d5a",
-        "974700",
-        "49aa10",
-        "99ba5a",
-        "ade151"
+    bytes3[] private _mushroomColors4 = [
+        bytes3(0x663a13),
+        0x137d5a,
+        0x974700,
+        0x49aa10,
+        0x99ba5a,
+        0xade151
     ];
 
     constructor() {
@@ -243,27 +246,28 @@ contract Generator is Ownable {
         _grounds[1].push(Rect(0, 18, 24, 1));
     }
 
-    function _setSpores(FileData[] calldata data) external {
+    function setSpores(FileData[] calldata data) external {
         _onlyOwner();
 
-        for (uint256 i; i < data.length; ++i) {
+        uint256 dataLength = data.length;
+        for (uint256 i; i < dataLength; ++i) {
             FileData memory file = data[i];
             Rect[] storage storageFile = _spores[file.file];
-            uint256 max = file.rects.length;
+            uint256 fileLength = file.rects.length;
 
-            for (uint256 j; j < max; ++j) {
+            for (uint256 j; j < fileLength; ++j) {
                 storageFile.push(file.rects[j]);
             }
         }
     }
 
-    function _setStems(FileData[] calldata data) external {
+    function setStems(FileData[] calldata data) external {
         _onlyOwner();
 
         _stems.setLayers(data);
     }
 
-    function _setCaps(FileData[] calldata data) external {
+    function setCaps(FileData[] calldata data) external {
         _onlyOwner();
 
         _caps.setLayers(data);
@@ -277,20 +281,50 @@ contract Generator is Ownable {
 
     function getMushroom(
         SeedData calldata seedData
-    ) external view returns (MushroomData memory) {
+    ) public view returns (MushroomData memory) {
         Rand memory rnd = Rand(seedData.seed, 0, seedData.extra);
         MushroomData memory data;
+        uint256 rdm = rnd.rdm();
+        uint8 level = rnd.lvl().toLvl1();
 
-        data.lvl = rnd.lvl();
+        data.lvl = level;
 
-        _setBcGround(data, rnd);
-        _setGround(data, rnd);
+        // we will unpack the rdm number in order to to avoid regen while large enough
+        // bit structure:
+        // 0x00...0x07 -> background -> 1 byte
+        // 0x08...0x0f -> ground -> 1 byte
+        // 0x10...0x17 -> groundColor -> 1 byte
+        // 0x18...0x1f -> stem -> 1 byte
+        // 0x20...0x27 -> stemColor -> 1 byte
+        // 0x28...0x2f -> cap -> 1 byte
+        // 0x30...0x37 -> capColor -> 1 byte
+        // 0x38...0x39 -> hasDots -> 2 bits
+        // 0x40...0x48 -> dotsColor -> 1 byte
+
+        // sets background
+        data.background = _backgroundColors(level).safeRdmItemAtIndex(rdm & 0xff);
+
+        // sets ground
+        data.ground = uint8(((rdm >> 0x8) & 0xff) % _GROUNDS_COUNT);
+        data.groundColor = _groundColors(level).safeRdmItemAtIndex((rdm >> 0x10) & 0xff);
 
         if (data.lvl == 0) {
-            _setSpores(data, rnd);
+            // sets spores
+            data.stem = uint8(((rdm >> 0x18) & 0xff) % _SPORES_COUNT);
+            data.stemColor = _mushroomColors(level).safeRdmItemAtIndex((rdm >> 0x20) & 0xff);
         } else {
-            _setStem(data, rnd);
-            _setCap(data, rnd);
+            // sets stems (same as spores, same packing too)
+            data.stem = uint8(((rdm >> 0x18) & 0xff) % _stemLevelCounts[level]);
+            data.stemColor = _mushroomColors(level).safeRdmItemAtIndex((rdm >> 0x20) & 0xff);
+
+            // sets cap
+            data.cap = uint8(((rdm >> 0x28) & 0xff) % _capLevelCounts[level]);
+            data.capColor = _mushroomColors(level.toLvl1()).safeRdmItemAtIndex((rdm >> 0x30) & 0xff);
+            data.hasDots = ((rdm >> 0x38) & 0x3) == 0;
+
+            if (data.hasDots) {
+                data.dotsColor = _mushroomColors(rnd.lvl().toLvl1()).safeRdmItemAtIndex((rdm >> 0x40) & 0xff);
+            }
         }
 
         return data;
@@ -305,42 +339,42 @@ contract Generator is Ownable {
     function getMeta(
         SeedData calldata seedData
     ) external view returns (string memory) {
-        MushroomData memory data = this.getMushroom(seedData);
+        MushroomData memory data = getMushroom(seedData);
         bytes memory lvl = abi.encodePacked('"level":', data.lvl._toString());
         bytes memory background = abi.encodePacked(
             ',"background":"#',
-            data.background,
+            data.background.bytes3ToHexString(),
             '"'
         );
         bytes memory ground = abi.encodePacked(
             ',"groundColor":"#',
-            data.groundColor,
+            data.groundColor.bytes3ToHexString(),
             '"'
         );
         bytes memory stem = abi.encodePacked(
             ',"stem":',
             data.stem._toString(),
             ',"stemColor":"#',
-            data.stemColor,
+            data.stemColor.bytes3ToHexString(),
             '"'
         );
         bytes memory cap = abi.encodePacked(
             ',"cap":',
             data.cap._toString(),
             ',"capColor":"#',
-            data.capColor,
+            data.capColor.bytes3ToHexString(),
             '"'
         );
         bytes memory capDots = abi.encodePacked(
             ',"hasDots":',
             data.hasDots ? "true" : "false",
-            ',"_dotsColor":"#',
-            data.dotsColor,
+            ',"dotsColor":"#',
+            data.dotsColor.bytes3ToHexString(),
             '",'
         );
-        bytes memory _WEB_text = abi.encodePacked('"_WEB":"', _WEB, '",');
-        bytes memory _DESCRIPTION_text = abi.encodePacked(
-            '"_DESCRIPTION":"',
+        bytes memory webText = abi.encodePacked('"web":"', _WEB, '",');
+        bytes memory descriptionText = abi.encodePacked(
+            '"description":"',
             _DESCRIPTION,
             '"'
         );
@@ -355,8 +389,8 @@ contract Generator is Ownable {
                 stem,
                 cap,
                 capDots,
-                _WEB_text,
-                _DESCRIPTION_text,
+                webText,
+                descriptionText,
                 "}"
             )
         );
@@ -364,7 +398,7 @@ contract Generator is Ownable {
 
     function _backgroundColors(
         uint256 index
-    ) private view returns (bytes6[] storage) {
+    ) private view returns (bytes3[] storage) {
         if (index == 0) return _backgroundColors0;
         if (index == 1) return _backgroundColors1;
         if (index == 2) return _backgroundColors2;
@@ -376,7 +410,7 @@ contract Generator is Ownable {
 
     function _groundColors(
         uint256 index
-    ) private view returns (bytes6[] storage) {
+    ) private view returns (bytes3[] storage) {
         if (index == 0) return _groundColors0;
         if (index == 1) return _groundColors1;
         if (index == 2) return _groundColors2;
@@ -387,8 +421,8 @@ contract Generator is Ownable {
     }
 
     function _mushroomColors(
-        uint256 index
-    ) private view returns (bytes6[] storage) {
+        uint8 index
+    ) private view returns (bytes3[] storage) {
         if (index == 0) return _mushroomColors0;
         if (index == 1) return _mushroomColors1;
         if (index == 2) return _mushroomColors2;
@@ -396,38 +430,6 @@ contract Generator is Ownable {
         if (index == 4) return _mushroomColors4;
 
         return _mushroomColors0;
-    }
-    
-    function _setBcGround(
-        MushroomData memory data,
-        Rand memory rnd
-    ) private view {
-        data.background = _backgroundColors(rnd.lvl().toLvl1()).random(rnd);
-    }
-
-    function _setGround(MushroomData memory data, Rand memory rnd) private view {
-        data.ground = uint8(rnd.next() % _GROUNDS_COUNT);
-        data.groundColor = _groundColors(rnd.lvl().toLvl1()).random(rnd);
-    }
-
-    function _setSpores(MushroomData memory data, Rand memory rnd) private view {
-        data.stem = uint8(rnd.next() % _sporesCount);
-        data.stemColor = _mushroomColors(rnd.lvl().toLvl1()).random(rnd);
-    }
-
-    function _setStem(MushroomData memory data, Rand memory rnd) private view {
-        data.stem = uint8(rnd.next() % _stemLevelCounts[rnd.lvl().toLvl1()]);
-        data.stemColor = _mushroomColors(rnd.lvl().toLvl1()).random(rnd);
-    }
-
-    function _setCap(MushroomData memory data, Rand memory rnd) private view {
-        data.cap = uint8(rnd.next() % _capLevelCounts[rnd.lvl().toLvl1()]);
-        data.capColor = _mushroomColors(rnd.lvl().toLvl1()).random(rnd);
-        data.hasDots = rnd.next() % 4 == 0;
-
-        if (data.hasDots) {
-            data.dotsColor = _mushroomColors(rnd.lvl().toLvl1()).random(rnd);
-        }
     }
 
     function _toSvg(

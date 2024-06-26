@@ -1,17 +1,18 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.25;
 
+// Packing all data
 struct MushroomData {
     uint8 lvl;
     uint8 ground;
     uint8 stem;
     uint8 cap;
     bool hasDots;
-    bytes6 background;
-    bytes6 groundColor;
-    bytes6 stemColor;
-    bytes6 capColor;
-    bytes6 dotsColor;
+    bytes3 background;
+    bytes3 groundColor;
+    bytes3 stemColor;
+    bytes3 capColor;
+    bytes3 dotsColor;
 }
 
 struct Rect {
@@ -23,25 +24,29 @@ struct Rect {
 
 struct FileData {
     uint8 lvl;
+    // allows packing while not changing much
     uint248 file;
     Rect[] rects;
 }
 
 struct ColorsData {
-    bytes6[] lvl0;
-    bytes6[] lvl1;
-    bytes6[] lvl2;
-    bytes6[] lvl3;
-    bytes6[] lvl4;
+    bytes3[] lvl0;
+    bytes3[] lvl1;
+    bytes3[] lvl2;
+    bytes3[] lvl3;
+    bytes3[] lvl4;
 }
 
+// packing below, seed enough for a balance of max 4294967296
 struct SeedData {
-    uint32 seed; // enough for a supply of max 4,294,967,295
+    uint32 seed;
     uint128 extra;
 }
 
 struct Rand {
+    // Enough till 4294967296 while seed level 5 is 2100000
     uint32 seed;
+    // Others are packed to hold on 32bytes
     uint96 nonce;
     uint128 extra;
 }

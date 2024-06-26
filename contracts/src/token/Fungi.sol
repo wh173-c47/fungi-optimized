@@ -6,6 +6,7 @@ import {Generator} from "../Generator.sol";
 import {ExtraSeedLib} from "../lib/ExtraSeedLib.sol";
 import {SeedData} from "../lib/Types.sol";
 
+// Here as there are already much writes, all the holder logic has been removed as those can be fetched through APIs / TheGraph
 abstract contract Mushrooms is PoolCreatableErc20i {
     using ExtraSeedLib for address;
 
@@ -14,17 +15,18 @@ abstract contract Mushrooms is PoolCreatableErc20i {
     mapping(address owner => mapping(uint256 tokenId => uint)) internal _ownedTokensIndex;
     mapping(address owner => mapping(uint256 => bool)) internal _owns;
     mapping(address owner => SeedData _seedData) internal _spores;
-    uint256 internal _mushroomsTotalCount;
-    uint256 internal _sporesTotalCount;
-    uint96 internal _randomNonce;
+    uint256 public mushroomsTotalCount;
+    uint256 internal sporesTotalCount;
+    // matching packing in rdm / seed data
+    uint128 internal _randomNonce;
 
     event OnMushroomTransfer(
         address indexed from,
         address indexed to,
         SeedData _seedData
     );
-    event OnSporesGrow(address indexed holder, SeedData _seedData);
-    event OnSporesShrink(address indexed holder, SeedData _seedData);
+    event OnSporesGrow(address indexed holder, SeedData seedData);
+    event OnSporesShrink(address indexed holder, SeedData seedData);
 
     constructor() PoolCreatableErc20i(msg.sender) {}
 
@@ -40,27 +42,46 @@ abstract contract Mushrooms is PoolCreatableErc20i {
         return 18;
     }
 
+    function isOwnerOf(address owner, uint256 seed) external view returns (bool) {
+        return _owns[owner][seed];
+    }
+
+    function sporesDegree(
+        address owner
+    ) external view returns (SeedData memory data) {
+        return _spores[owner];
+    }
+
+    function mushroomCount(address owner) external view returns (uint) {
+        return _counts[owner];
+    }
+
+    function mushroomOfOwnerByIndex(
+        address owner,
+        uint index
+    ) external view returns (SeedData memory data) {
+        return _ownedTokens[owner][index];
+    }
+
     function _trySeedTransfer(
         address from,
         address to,
         uint256 amount
     ) internal {
-        uint256 cachedDecimals = decimals();
-
         if (from == address(this)) return;
 
+        uint256 cachedDecimals = decimals();
         uint32 seed = uint32(amount / (10 ** cachedDecimals));
-        address cachedPool = _pool;
+        address cachedPool = pool;
 
         if (seed > 0 && from != cachedPool && to != cachedPool) {
+            SeedData memory fromSpores = _spores[from];
             // transfer growing mushroom
-            if (_spores[from].seed == seed) {
-                SeedData memory data = _spores[from];
-
+            if (fromSpores.seed == seed) {
                 _removeSeedCount(from, seed);
-                _addTokenToOwnerEnumeration(to, data);
+                _addTokenToOwnerEnumeration(to, fromSpores);
 
-                emit OnMushroomTransfer(from, to, data);
+                emit OnMushroomTransfer(from, to, fromSpores);
 
                 return;
             }
@@ -92,21 +113,21 @@ abstract contract Mushrooms is PoolCreatableErc20i {
 
     function _addSeedCount(address account, uint32 seed) private {
         if (seed == 0) return;
-        if (account == _pool) return;
+        if (account == pool) return;
 
         SeedData memory last = _spores[account];
         uint32 nextSeed = last.seed + seed;
 
         _spores[account] = SeedData(nextSeed, account.extra(++_randomNonce));
 
-        if (last.seed == 0 && nextSeed > 0) ++_sporesTotalCount;
+        if (last.seed == 0 && nextSeed > 0) ++sporesTotalCount;
 
         emit OnSporesGrow(account, _spores[account]);
     }
 
     function _removeSeedCount(address account, uint32 seed) private {
         if (seed == 0) return;
-        if (account == _pool) return;
+        if (account == pool) return;
 
         SeedData memory lastSpores = _spores[account];
 
@@ -120,7 +141,7 @@ abstract contract Mushrooms is PoolCreatableErc20i {
             _spores[account] = earlyNextSeedData;
 
             if (lastSpores.seed > 0 && earlyNextSeed == 0)
-                --_sporesTotalCount;
+                --sporesTotalCount;
 
             emit OnSporesShrink(account, earlyNextSeedData);
 
@@ -130,18 +151,21 @@ abstract contract Mushrooms is PoolCreatableErc20i {
         uint32 seedRemains = seed - lastSpores.seed;
 
         // remove mushrooms
-        uint256 count = _counts[account];
         uint32 removed;
 
-        for (uint256 i; i < count && removed < seedRemains; ++i) {
-            uint32 removedSeed = _ownedTokens[account][0].seed;
+        {
+            uint256 count = _counts[account];
 
-            _removeTokenFromOwnerEnumeration(account, removedSeed);
+            for (uint256 i; i < count && removed < seedRemains; ++i) {
+                uint32 removedSeed = _ownedTokens[account][0].seed;
 
-            removed += seed;
+                _removeTokenFromOwnerEnumeration(account, removedSeed);
+
+                removed += seed;
+            }
         }
 
-        uint96 nextRdmNonce;
+        uint128 nextRdmNonce;
         uint32 nextSeed;
 
         if (removed > seedRemains) {
@@ -150,7 +174,7 @@ abstract contract Mushrooms is PoolCreatableErc20i {
                 nextRdmNonce = _randomNonce + 2;
             }
 
-            nextSeed = lastSpores.seed + (removed - seedRemains);
+            nextSeed = lastSpores.seed + removed - seedRemains;
         } else {
             // Allows rdm nonce OF
             unchecked {
@@ -168,8 +192,7 @@ abstract contract Mushrooms is PoolCreatableErc20i {
         _spores[account] = nextSeedData;
         _randomNonce = nextRdmNonce;
 
-        if (lastSpores.seed > 0 && nextSeed == 0)
-            --_sporesTotalCount;
+        if (lastSpores.seed > 0 && nextSeed == 0) --sporesTotalCount;
 
         emit OnSporesShrink(account, nextSeedData);
     }
@@ -178,27 +201,24 @@ abstract contract Mushrooms is PoolCreatableErc20i {
         address to,
         SeedData memory data
     ) private {
-        if (to == _pool) return;
+        if (to == pool) return;
 
         uint256 cachedCount = _counts[to];
 
         _counts[to] = cachedCount + 1;
-        ++_mushroomsTotalCount;
-
-        uint256 length = cachedCount;
-
-        _ownedTokens[to][length] = data;
-        _ownedTokensIndex[to][data.seed] = length;
+        ++mushroomsTotalCount;
+        _ownedTokens[to][cachedCount] = data;
+        _ownedTokensIndex[to][data.seed] = cachedCount;
         _owns[to][data.seed] = true;
     }
 
     function _removeTokenFromOwnerEnumeration(address from, uint32 seed) private {
-        if (from == _pool) return;
+        if (from == pool) return;
 
         uint256 nextCount = _counts[from] - 1;
 
         _counts[from] = nextCount;
-        --_mushroomsTotalCount;
+        --mushroomsTotalCount;
         _owns[from][seed] = false;
 
         uint256 lastTokenIndex = nextCount;
@@ -216,35 +236,6 @@ abstract contract Mushrooms is PoolCreatableErc20i {
         delete _ownedTokensIndex[from][data.seed];
         delete _ownedTokens[from][lastTokenIndex];
     }
-
-    function isOwnerOf(address owner, uint256 seed) external view returns (bool) {
-        return _owns[owner][seed];
-    }
-
-    function sporesDegree(
-        address owner
-    ) external view returns (SeedData memory data) {
-        return _spores[owner];
-    }
-
-    function mushroomCount(address owner) external view returns (uint) {
-        return _counts[owner];
-    }
-
-    function mushroomOfOwnerByIndex(
-        address owner,
-        uint index
-    ) external view returns (SeedData memory data) {
-        return _ownedTokens[owner][index];
-    }
-
-    function mushroomsTotalCount() external view returns (uint) {
-        return _mushroomsTotalCount;
-    }
-
-    function sporesTotalCount() external view returns (uint) {
-        return _sporesTotalCount;
-    }
 }
 
 contract Fungi is Mushrooms, Generator {
@@ -261,7 +252,7 @@ contract Fungi is Mushrooms, Generator {
     }
 
     function maxBuy() public view returns (uint256) {
-        if (!_isStarted()) return _START_TOTAL_SUPPLY;
+        if (pool == address(0)) return _START_TOTAL_SUPPLY;
 
         uint256 count = _START_MAX_BUY_COUNT +
             (_START_TOTAL_SUPPLY *
@@ -298,34 +289,25 @@ contract Fungi is Mushrooms, Generator {
         address to,
         uint256 amount
     ) internal override {
-        if (_isStarted()) {
+        if (pool != address(0)) {
             _trySeedTransfer(from, to, amount);
-        } else {
-            if (!(from == _owner || to == _owner)) revert NotStarted();
+        } else if (!(from == _owner || to == _owner)) {
+            revert NotStarted();
         }
-        // allow burning
+
         if (to == address(0)) {
+            // burns
             _burn(from, amount);
 
             return;
-        }
-        // system transfers
-        if (from == address(this)) {
-            super._transfer(from, to, amount);
+        } else if (from == pool) {
+            // buys
+            _buy(to, amount);
 
             return;
         }
-        if (_feeLocked) {
-            super._transfer(from, to, amount);
 
-            return;
-        } else {
-            if (from == _pool) {
-                _buy(to, amount);
-
-                return;
-            }
-        }
+        // default
 
         super._transfer(from, to, amount);
     }
@@ -338,7 +320,7 @@ contract Fungi is Mushrooms, Generator {
 
         _feeLocked = true;
 
-        super._transfer(_pool, to, amount);
+        super._transfer(pool, to, amount);
 
         _feeLocked = false;
     }
