@@ -12,6 +12,7 @@
 
 [profile.remappings]
   solady = "lib/solady"
+  "@openzeppelin" = "lib/openzeppelin-contracts"
 
 [fmt]
   line_length = 80
