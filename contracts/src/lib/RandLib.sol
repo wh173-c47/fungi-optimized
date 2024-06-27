@@ -27,10 +27,11 @@ library RandLib {
         return 5;
     }
 
-    function safeRdmItemAtIndex(
-        bytes3[] memory data,
-        uint256 rdmIndex
-    ) internal pure returns (bytes3) {
+    function safeRdmItemAtIndex(bytes3[] memory data, uint256 rdmIndex)
+        internal
+        pure
+        returns (bytes3)
+    {
         return data[rdmIndex % data.length];
     }
 }

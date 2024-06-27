@@ -24,13 +24,9 @@ abstract contract PoolCreatableErc20i is ERC20 {
             // We reduce a bit bytecode by packing reverts err codes in mem as this fn won't be much triggered
             mstore(returndatasize(), 0x189117a41fbde445) // packed NotPairCreator() and AlreadyStarted()
 
-            if iszero(eq(caller(), pairCreator)) {
-                revert(0x18, 0x4) // NotPairCreator()
-            }
+            if iszero(eq(caller(), pairCreator)) { revert(0x18, 0x4) } // NotPairCreator()
 
-            if gt(sload(pool.slot), returndatasize()) {
-                revert(0x1c, 0x4) // AlreadyStarted()
-            }
+            if gt(sload(pool.slot), returndatasize()) { revert(0x1c, 0x4) } // AlreadyStarted()
         }
 
         _startTime = block.timestamp;

@@ -15,12 +15,12 @@ library RectLib {
     using RectLib for Rect;
     using StringLib for uint8;
 
-    function toSvg(
-        Rect memory r,
-        bytes3 color
-    ) internal pure returns (string memory) {
-        return
-            string(
+    function toSvg(Rect memory r, bytes3 color)
+        internal
+        pure
+        returns (string memory)
+    {
+        return string(
             abi.encodePacked(
                 "<rect x='",
                 r.x._toString(),
@@ -36,30 +36,31 @@ library RectLib {
             )
         );
     }
-// TODO: See logic / use of this function previously
-//    function toSvg(
-//        Rect[] storage rects,
-//        bytes3[] storage colors,
-//        Rand memory rnd
-//    ) internal view returns (string memory) {
-//        string memory res;
-//        uint max = rects.length;
-//
-//        for (uint256 i; i < max; ++i) {
-//            res = string(
-//                abi.encodePacked(res, rects[i].toSvg(colors.random(rnd)))
-//            );
-//        }
-//
-//        return res;
-//    }
+    // TODO: See logic / use of this function previously
+    //    function toSvg(
+    //        Rect[] storage rects,
+    //        bytes3[] storage colors,
+    //        Rand memory rnd
+    //    ) internal view returns (string memory) {
+    //        string memory res;
+    //        uint max = rects.length;
+    //
+    //        for (uint256 i; i < max; ++i) {
+    //            res = string(
+    //                abi.encodePacked(res, rects[i].toSvg(colors.random(rnd)))
+    //            );
+    //        }
+    //
+    //        return res;
+    //    }
 
-    function toSvg(
-        Rect[] storage rects,
-        bytes3 color
-    ) internal view returns (string memory) {
+    function toSvg(Rect[] storage rects, bytes3 color)
+        internal
+        view
+        returns (string memory)
+    {
         string memory res;
-        uint max = rects.length;
+        uint256 max = rects.length;
 
         for (uint256 i = 0; i < max; ++i) {
             res = string(abi.encodePacked(res, rects[i].toSvg(color)));
@@ -68,7 +69,11 @@ library RectLib {
         return res;
     }
 
-    function bytes3ToHexString(bytes3 data) internal pure returns (string memory str) {
+    function bytes3ToHexString(bytes3 data)
+        internal
+        pure
+        returns (string memory str)
+    {
         /// @solidity memory-safe-assembly
         assembly {
             // Allocate 64 bytes of memory (0x20 bytes for length + 0x20 bytes for the content).
@@ -92,10 +97,11 @@ library RectLib {
         }
     }
 
-    function safeRdmItemAtIndex(
-        bytes3[] memory data,
-        uint256 rdmIndex
-    ) internal pure returns (bytes3) {
+    function safeRdmItemAtIndex(bytes3[] memory data, uint256 rdmIndex)
+        internal
+        pure
+        returns (bytes3)
+    {
         return data[rdmIndex % data.length];
     }
 

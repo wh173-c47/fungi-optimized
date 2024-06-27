@@ -9,11 +9,9 @@ abstract contract PoolCreatableErc20i is ERC20 {
     bool internal _feeLocked;
     address immutable _pairCreator;
 
-    constructor(
-        string memory name_,
-        string memory symbol_,
-        address pairCreator
-    ) ERC20(name_, symbol_) {
+    constructor(string memory name_, string memory symbol_, address pairCreator)
+        ERC20(name_, symbol_)
+    {
         _pairCreator = pairCreator;
     }
 

@@ -6,7 +6,7 @@ import {FungiOld} from "../src/old/token/FungiOld.sol";
 import {SeedData} from "../src/old/Generator.sol";
 
 contract FungiOldOldTest is Test {
-    uint256 private constant _START_TOTAL_SUPPLY = 210e6 * (10 ** 18);
+    uint256 private constant _START_TOTAL_SUPPLY = 210e6 * (10 ** 9);
     address private constant PAIR = address(0xcafe);
     address private constant TMP_OWNER = address(0xbabe);
     address private constant RDM_ACCOUNT = address(0xdead);
@@ -39,14 +39,15 @@ contract FungiOldOldTest is Test {
         fungi.launch(PAIR);
     }
 
-    function testTransferNotStartedAndFromOrToOwnerPass(uint256 amount1, uint256 amount2) public {
+    function testTransferNotStartedAndFromOrToOwnerPass(
+        uint256 amount1,
+        uint256 amount2
+    ) public {
         uint256 base = _START_TOTAL_SUPPLY / 2;
 
         vm.assume(
-            amount1 > amount2 &&
-            amount1 < base &&
-            amount2 < base &&
-            (amount1 + amount2) < base
+            amount1 > amount2 && amount1 < base && amount2 < base
+                && (amount1 + amount2) < base
         );
 
         fungi.transfer(RDM_ACCOUNT, base);
@@ -62,9 +63,8 @@ contract FungiOldOldTest is Test {
 
     function testTransferStartedPass(uint256 amount1, uint256 amount2) public {
         vm.assume(
-            amount1 < _START_TOTAL_SUPPLY &&
-            amount2 < _START_TOTAL_SUPPLY &&
-            (amount1 + amount2) < _START_TOTAL_SUPPLY / 2
+            amount1 < _START_TOTAL_SUPPLY && amount2 < _START_TOTAL_SUPPLY
+                && (amount1 + amount2) < _START_TOTAL_SUPPLY / 2
         );
 
         fungi.launch(PAIR);
@@ -105,10 +105,12 @@ contract FungiOldOldTest is Test {
         fungi.transfer(RDM_ACCOUNT, fungi.maxBuy());
     }
 
-    function testTransferGrowsAndShrinkSporesIfTransferringMoreThanOneToken(uint256 amount) public {
-        vm.assume(amount > 1 ether && amount < _START_TOTAL_SUPPLY);
+    function testTransferGrowsAndShrinkSporesIfTransferringMoreThanOneToken(
+        uint256 amount
+    ) public {
+        vm.assume(amount >= 10 ** fungi.decimals() && amount < _START_TOTAL_SUPPLY);
 
-        uint256 amountPlain = amount / (10 ** 18);
+        uint256 amountPlain = amount / (10 ** fungi.decimals());
 
         fungi.launch(PAIR);
 
@@ -120,6 +122,8 @@ contract FungiOldOldTest is Test {
         assertEq(beforeTo.seed, 0);
         assertEq(beforeTo.extra, 0);
 
+        uint256 fromBalance = fungi.balanceOf(RDM_ACCOUNT);
+
         vm.prank(RDM_ACCOUNT);
         fungi.transfer(RDM_ACCOUNT2, amount);
 
@@ -128,9 +132,8 @@ contract FungiOldOldTest is Test {
 
         assertEq(afterTo.seed, amountPlain);
         assertNotEq(afterTo.extra, 0);
-        // TODO: See why original contract test is failing here
-//        assertEq(afterFrom.seed, beforeFrom.seed - amountPlain);
-//        assertNotEq(afterFrom.extra, beforeFrom.extra);
+        assertEq(afterFrom.seed, (fromBalance - amount) / (10 ** fungi.decimals()));
+        assertEq(afterFrom.extra, beforeFrom.extra);
     }
 
     function testTransferDoesNothingIfTransferringZeroToken() public {
@@ -156,8 +159,10 @@ contract FungiOldOldTest is Test {
         assertEq(afterFrom.extra, beforeFrom.extra);
     }
 
-    function testTransferMushroomIfTransferringAllTokens(uint256 amount) public {
-        vm.assume(amount > 1 ether && amount < _START_TOTAL_SUPPLY);
+    function testTransferMushroomIfTransferringAllTokens(uint256 amount)
+        public
+    {
+        vm.assume(amount >= 10 ** fungi.decimals() && amount < _START_TOTAL_SUPPLY);
 
         fungi.launch(PAIR);
         fungi.transfer(RDM_ACCOUNT, amount);
@@ -169,7 +174,8 @@ contract FungiOldOldTest is Test {
         vm.prank(RDM_ACCOUNT);
         fungi.transfer(RDM_ACCOUNT2, amount);
 
-        SeedData memory mushroomData = fungi.mushroomOfOwnerByIndex(RDM_ACCOUNT2, 0);
+        SeedData memory mushroomData =
+            fungi.mushroomOfOwnerByIndex(RDM_ACCOUNT2, 0);
 
         assertEq(fungi.mushroomCount(RDM_ACCOUNT), 0);
         assertEq(fungi.mushroomCount(RDM_ACCOUNT2), 1);
@@ -177,8 +183,10 @@ contract FungiOldOldTest is Test {
         assertEq(sporeData.extra, mushroomData.extra);
     }
 
-    function testTransferMushroomIfTransferringAllTokensToSelf(uint256 amount) public {
-        vm.assume(amount > 1 ether && amount < _START_TOTAL_SUPPLY);
+    function testTransferMushroomIfTransferringAllTokensToSelf(uint256 amount)
+        public
+    {
+        vm.assume(amount >= 10 ** fungi.decimals() && amount < _START_TOTAL_SUPPLY);
 
         fungi.launch(PAIR);
         fungi.transfer(RDM_ACCOUNT, amount);
@@ -190,15 +198,20 @@ contract FungiOldOldTest is Test {
         vm.prank(RDM_ACCOUNT);
         fungi.transfer(RDM_ACCOUNT, amount);
 
-        SeedData memory mushroomData = fungi.mushroomOfOwnerByIndex(RDM_ACCOUNT, 0);
+        SeedData memory mushroomData =
+            fungi.mushroomOfOwnerByIndex(RDM_ACCOUNT, 0);
 
         assertEq(fungi.mushroomCount(RDM_ACCOUNT), 1);
         assertEq(sporeData.seed, mushroomData.seed);
         assertEq(sporeData.extra, mushroomData.extra);
     }
 
-    function testTransferMushroomIfTransferringAllTokensAndSameSeed(uint256 amount) public {
-        vm.assume(amount > 4 ether && amount < _START_TOTAL_SUPPLY && amount % 2 == 0);
+    function testTransferMushroomIfTransferringAllTokensAndSameSeed(
+        uint256 amount
+    ) public {
+        vm.assume(
+            amount > 4 * 10 ** fungi.decimals() && amount < _START_TOTAL_SUPPLY && amount % 2 == 0
+        );
 
         uint256 intermediateAmount = amount / 2;
 
@@ -210,12 +223,14 @@ contract FungiOldOldTest is Test {
         vm.prank(RDM_ACCOUNT);
         fungi.transfer(RDM_ACCOUNT, intermediateAmount);
 
-        SeedData memory fromMushroom = fungi.mushroomOfOwnerByIndex(RDM_ACCOUNT, 0);
+        SeedData memory fromMushroom =
+            fungi.mushroomOfOwnerByIndex(RDM_ACCOUNT, 0);
 
         vm.prank(RDM_ACCOUNT);
         fungi.transfer(RDM_ACCOUNT2, intermediateAmount);
 
-        SeedData memory toMushroom = fungi.mushroomOfOwnerByIndex(RDM_ACCOUNT2, 0);
+        SeedData memory toMushroom =
+            fungi.mushroomOfOwnerByIndex(RDM_ACCOUNT2, 0);
 
         assertEq(fungi.mushroomCount(RDM_ACCOUNT), 0);
         assertEq(fungi.mushroomCount(RDM_ACCOUNT2), 1);
@@ -223,7 +238,9 @@ contract FungiOldOldTest is Test {
         assertEq(fromMushroom.extra, toMushroom.extra);
     }
 
-    function testTransferNotStartedAndNotFromOrToOwnerRevertsWithNotStarted() public {
+    function testTransferNotStartedAndNotFromOrToOwnerRevertsWithNotStarted()
+        public
+    {
         vm.prank(RDM_ACCOUNT);
         vm.expectRevert();
         fungi.transfer(PAIR, 999);

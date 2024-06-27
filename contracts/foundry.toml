@@ -14,5 +14,8 @@
   solady = "lib/solady"
   "@openzeppelin" = "lib/openzeppelin-contracts"
 
+[profile.default.fuzz]
+  runs = 1024
+
 [fmt]
   line_length = 80

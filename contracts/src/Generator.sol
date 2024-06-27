@@ -14,7 +14,8 @@ uint256 constant _GROUNDS_COUNT = 2;
 uint8 constant _PIXELS_COUNT = 24;
 // Allows a max seed value of 4294967296
 
-string constant _DESCRIPTION = "Fungi, $FUNGI. The First ERC-20i with Native Inscriptions.";
+string constant _DESCRIPTION =
+    "Fungi, $FUNGI. The First ERC-20i with Native Inscriptions.";
 string constant _WEB = "https://fungifungi.art/";
 
 contract Generator is Ownable {
@@ -98,14 +99,8 @@ contract Generator is Ownable {
         0xffb2a7
     ];
 
-    bytes3[] private _backgroundColors4 = [
-        bytes3(0x0f0c45),
-        0x560e43,
-        0xb21030,
-        0xff6e69,
-        0x534fed,
-        0x7cb8ff
-    ];
+    bytes3[] private _backgroundColors4 =
+        [bytes3(0x0f0c45), 0x560e43, 0xb21030, 0xff6e69, 0x534fed, 0x7cb8ff];
 
     bytes3[] private _groundColors0 = [
         bytes3(0x000000),
@@ -164,14 +159,8 @@ contract Generator is Ownable {
         0xffffff
     ];
 
-    bytes3[] private _groundColors4 = [
-        bytes3(0x663a13),
-        0x137d5a,
-        0x974700,
-        0x49aa10,
-        0x99ba5a,
-        0xade151
-    ];
+    bytes3[] private _groundColors4 =
+        [bytes3(0x663a13), 0x137d5a, 0x974700, 0x49aa10, 0x99ba5a, 0xade151];
 
     bytes3[] private _mushroomColors0 = [
         bytes3(0x000000),
@@ -230,14 +219,8 @@ contract Generator is Ownable {
         0xffffff
     ];
 
-    bytes3[] private _mushroomColors4 = [
-        bytes3(0x663a13),
-        0x137d5a,
-        0x974700,
-        0x49aa10,
-        0x99ba5a,
-        0xade151
-    ];
+    bytes3[] private _mushroomColors4 =
+        [bytes3(0x663a13), 0x137d5a, 0x974700, 0x49aa10, 0x99ba5a, 0xade151];
 
     constructor() {
         _grounds[0].push(Rect(0, 17, 24, 7));
@@ -279,9 +262,11 @@ contract Generator is Ownable {
         _dots.setLayers(data);
     }
 
-    function getMushroom(
-        SeedData calldata seedData
-    ) public view returns (MushroomData memory) {
+    function getMushroom(SeedData calldata seedData)
+        public
+        view
+        returns (MushroomData memory)
+    {
         Rand memory rnd = Rand(seedData.seed, 0, seedData.extra);
         MushroomData memory data;
         uint256 rdm = rnd.rdm();
@@ -302,54 +287,61 @@ contract Generator is Ownable {
         // 0x40...0x48 -> dotsColor -> 1 byte
 
         // sets background
-        data.background = _backgroundColors(level).safeRdmItemAtIndex(rdm & 0xff);
+        data.background =
+            _backgroundColors(level).safeRdmItemAtIndex(rdm & 0xff);
 
         // sets ground
         data.ground = uint8(((rdm >> 0x8) & 0xff) % _GROUNDS_COUNT);
-        data.groundColor = _groundColors(level).safeRdmItemAtIndex((rdm >> 0x10) & 0xff);
+        data.groundColor =
+            _groundColors(level).safeRdmItemAtIndex((rdm >> 0x10) & 0xff);
 
         if (data.lvl == 0) {
             // sets spores
             data.stem = uint8(((rdm >> 0x18) & 0xff) % _SPORES_COUNT);
-            data.stemColor = _mushroomColors(level).safeRdmItemAtIndex((rdm >> 0x20) & 0xff);
+            data.stemColor =
+                _mushroomColors(level).safeRdmItemAtIndex((rdm >> 0x20) & 0xff);
         } else {
             // sets stems (same as spores, same packing too)
             data.stem = uint8(((rdm >> 0x18) & 0xff) % _stemLevelCounts[level]);
-            data.stemColor = _mushroomColors(level).safeRdmItemAtIndex((rdm >> 0x20) & 0xff);
+            data.stemColor =
+                _mushroomColors(level).safeRdmItemAtIndex((rdm >> 0x20) & 0xff);
 
             // sets cap
             data.cap = uint8(((rdm >> 0x28) & 0xff) % _capLevelCounts[level]);
-            data.capColor = _mushroomColors(level.toLvl1()).safeRdmItemAtIndex((rdm >> 0x30) & 0xff);
+            data.capColor = _mushroomColors(level.toLvl1()).safeRdmItemAtIndex(
+                (rdm >> 0x30) & 0xff
+            );
             data.hasDots = ((rdm >> 0x38) & 0x3) == 0;
 
             if (data.hasDots) {
-                data.dotsColor = _mushroomColors(rnd.lvl().toLvl1()).safeRdmItemAtIndex((rdm >> 0x40) & 0xff);
+                data.dotsColor = _mushroomColors(rnd.lvl().toLvl1())
+                    .safeRdmItemAtIndex((rdm >> 0x40) & 0xff);
             }
         }
 
         return data;
     }
 
-    function getSvg(
-        SeedData calldata seedData
-    ) external view returns (string memory) {
+    function getSvg(SeedData calldata seedData)
+        external
+        view
+        returns (string memory)
+    {
         return _toSvg(this.getMushroom(seedData));
     }
 
-    function getMeta(
-        SeedData calldata seedData
-    ) external view returns (string memory) {
+    function getMeta(SeedData calldata seedData)
+        external
+        view
+        returns (string memory)
+    {
         MushroomData memory data = getMushroom(seedData);
         bytes memory lvl = abi.encodePacked('"level":', data.lvl._toString());
         bytes memory background = abi.encodePacked(
-            ',"background":"#',
-            data.background.bytes3ToHexString(),
-            '"'
+            ',"background":"#', data.background.bytes3ToHexString(), '"'
         );
         bytes memory ground = abi.encodePacked(
-            ',"groundColor":"#',
-            data.groundColor.bytes3ToHexString(),
-            '"'
+            ',"groundColor":"#', data.groundColor.bytes3ToHexString(), '"'
         );
         bytes memory stem = abi.encodePacked(
             ',"stem":',
@@ -373,14 +365,10 @@ contract Generator is Ownable {
             '",'
         );
         bytes memory webText = abi.encodePacked('"web":"', _WEB, '",');
-        bytes memory descriptionText = abi.encodePacked(
-            '"description":"',
-            _DESCRIPTION,
-            '"'
-        );
+        bytes memory descriptionText =
+            abi.encodePacked('"description":"', _DESCRIPTION, '"');
 
-        return
-            string(
+        return string(
             abi.encodePacked(
                 "{",
                 lvl,
@@ -396,9 +384,11 @@ contract Generator is Ownable {
         );
     }
 
-    function _backgroundColors(
-        uint256 index
-    ) private view returns (bytes3[] storage) {
+    function _backgroundColors(uint256 index)
+        private
+        view
+        returns (bytes3[] storage)
+    {
         if (index == 0) return _backgroundColors0;
         if (index == 1) return _backgroundColors1;
         if (index == 2) return _backgroundColors2;
@@ -408,9 +398,11 @@ contract Generator is Ownable {
         return _backgroundColors0;
     }
 
-    function _groundColors(
-        uint256 index
-    ) private view returns (bytes3[] storage) {
+    function _groundColors(uint256 index)
+        private
+        view
+        returns (bytes3[] storage)
+    {
         if (index == 0) return _groundColors0;
         if (index == 1) return _groundColors1;
         if (index == 2) return _groundColors2;
@@ -420,9 +412,11 @@ contract Generator is Ownable {
         return _groundColors0;
     }
 
-    function _mushroomColors(
-        uint8 index
-    ) private view returns (bytes3[] storage) {
+    function _mushroomColors(uint8 index)
+        private
+        view
+        returns (bytes3[] storage)
+    {
         if (index == 0) return _mushroomColors0;
         if (index == 1) return _mushroomColors1;
         if (index == 2) return _mushroomColors2;
@@ -432,9 +426,11 @@ contract Generator is Ownable {
         return _mushroomColors0;
     }
 
-    function _toSvg(
-        MushroomData memory data
-    ) private view returns (string memory) {
+    function _toSvg(MushroomData memory data)
+        private
+        view
+        returns (string memory)
+    {
         string memory pixelsCount = _PIXELS_COUNT._toString();
         bytes memory svgStart = abi.encodePacked(
             "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0",
@@ -446,64 +442,68 @@ contract Generator is Ownable {
         );
 
         if (data.lvl == 0) {
-            return
-                string(
-                    abi.encodePacked(
-                        svgStart,
-                        _backgroundSvg(data),
-                        _groundSvg(data),
-                        _stemSvg(data),
-                        "</svg>"
-                    )
-                );
+            return string(
+                abi.encodePacked(
+                    svgStart,
+                    _backgroundSvg(data),
+                    _groundSvg(data),
+                    _stemSvg(data),
+                    "</svg>"
+                )
+            );
         } else {
-            return
-                string(
-                    abi.encodePacked(
-                        svgStart,
-                        _backgroundSvg(data),
-                        _groundSvg(data),
-                        _stemSvg(data),
-                        _capSvg(data),
-                        "</svg>"
-                    )
-                );
+            return string(
+                abi.encodePacked(
+                    svgStart,
+                    _backgroundSvg(data),
+                    _groundSvg(data),
+                    _stemSvg(data),
+                    _capSvg(data),
+                    "</svg>"
+                )
+            );
         }
     }
 
-    function _backgroundSvg(
-        MushroomData memory data
-    ) private pure returns (string memory) {
+    function _backgroundSvg(MushroomData memory data)
+        private
+        pure
+        returns (string memory)
+    {
         Rect memory r = Rect(0, 0, _PIXELS_COUNT, _PIXELS_COUNT);
 
         return r.toSvg(data.background);
     }
 
-    function _groundSvg(
-        MushroomData memory data
-    ) private view returns (string memory) {
+    function _groundSvg(MushroomData memory data)
+        private
+        view
+        returns (string memory)
+    {
         return _grounds[data.ground].toSvg(data.groundColor);
     }
 
-    function _stemSvg(
-        MushroomData memory data
-    ) private view returns (string memory) {
+    function _stemSvg(MushroomData memory data)
+        private
+        view
+        returns (string memory)
+    {
         if (data.lvl == 0) return _spores[data.stem].toSvg(data.stemColor);
 
         return _stems[data.lvl.toLvl1()][data.stem].toSvg(data.stemColor);
     }
 
-    function _capSvg(
-        MushroomData memory data
-    ) private view returns (string memory) {
-        string memory cap = _caps[data.lvl.toLvl1()][data.cap].toSvg(
-            data.capColor
-        );
+    function _capSvg(MushroomData memory data)
+        private
+        view
+        returns (string memory)
+    {
+        string memory cap =
+            _caps[data.lvl.toLvl1()][data.cap].toSvg(data.capColor);
 
         if (data.hasDots) {
-            string memory _dotsSvg = _dots[data.lvl.toLvl1()][data.cap].toSvg(
-                data.dotsColor
-            );
+            string memory _dotsSvg =
+                _dots[data.lvl.toLvl1()][data.cap].toSvg(data.dotsColor);
 
             return string(abi.encodePacked(cap, _dotsSvg));
         } else {

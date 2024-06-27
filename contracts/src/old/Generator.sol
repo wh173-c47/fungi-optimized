@@ -3,24 +3,24 @@ pragma solidity ^0.8.20;
 
 import "./lib/Ownable.sol";
 
-uint constant levelsCount = 5;
-uint constant bcgroundsCount = 6;
-uint constant groundsCount = 2;
+uint256 constant levelsCount = 5;
+uint256 constant bcgroundsCount = 6;
+uint256 constant groundsCount = 2;
 uint8 constant pixelsCount = 24;
-uint constant seedLevel1 = 21000;
-uint constant seedLevel2 = 525000;
-uint constant seedLevel3 = 1050000;
-uint constant seedLevel4 = 1575000;
-uint constant seedLevel5 = 2100000;
+uint256 constant seedLevel1 = 21000;
+uint256 constant seedLevel2 = 525000;
+uint256 constant seedLevel3 = 1050000;
+uint256 constant seedLevel4 = 1575000;
+uint256 constant seedLevel5 = 2100000;
 
 struct MushroomData {
-    uint lvl;
+    uint256 lvl;
     string background;
-    uint ground;
+    uint256 ground;
     string groundColor;
-    uint stem;
+    uint256 stem;
     string stemColor;
-    uint cap;
+    uint256 cap;
     string capColor;
     bool hasDots;
     string dotsColor;
@@ -34,8 +34,8 @@ struct Rect {
 }
 
 struct FileData {
-    uint lvl;
-    uint file;
+    uint256 lvl;
+    uint256 file;
     Rect[] rects;
 }
 
@@ -48,27 +48,24 @@ struct ColorsData {
 }
 
 struct SeedData {
-    uint seed;
-    uint extra;
+    uint256 seed;
+    uint256 extra;
 }
 
 struct Rand {
-    uint seed;
-    uint nonce;
-    uint extra;
+    uint256 seed;
+    uint256 nonce;
+    uint256 extra;
 }
 
 library RandLib {
-    function next(Rand memory rnd) internal pure returns (uint) {
-        return
-            uint(
-                keccak256(
-                    abi.encodePacked(rnd.seed + rnd.nonce++ - 1, rnd.extra)
-                )
-            );
+    function next(Rand memory rnd) internal pure returns (uint256) {
+        return uint256(
+            keccak256(abi.encodePacked(rnd.seed + rnd.nonce++ - 1, rnd.extra))
+        );
     }
 
-    function lvl(Rand memory rnd) internal pure returns (uint) {
+    function lvl(Rand memory rnd) internal pure returns (uint256) {
         if (rnd.seed < seedLevel1) return 0;
         if (rnd.seed < seedLevel2) return 1;
         if (rnd.seed < seedLevel3) return 2;
@@ -77,61 +74,63 @@ library RandLib {
         return 5;
     }
 
-    function random(
-        string[] memory data,
-        Rand memory rnd
-    ) internal pure returns (string memory) {
+    function random(string[] memory data, Rand memory rnd)
+        internal
+        pure
+        returns (string memory)
+    {
         return data[randomIndex(data, rnd)];
     }
 
-    function randomIndex(
-        string[] memory data,
-        Rand memory rnd
-    ) internal pure returns (uint) {
+    function randomIndex(string[] memory data, Rand memory rnd)
+        internal
+        pure
+        returns (uint256)
+    {
         return next(rnd) % data.length;
     }
 }
 
 library LayersLib {
     function setLayers(
-        mapping(uint => mapping(uint => Rect[])) storage rects,
+        mapping(uint256 => mapping(uint256 => Rect[])) storage rects,
         FileData[] calldata data
     ) internal {
-        for (uint i = 0; i < data.length; ++i) {
+        for (uint256 i = 0; i < data.length; ++i) {
             setFile(rects, data[i]);
         }
     }
 
     function setFile(
-        mapping(uint => mapping(uint => Rect[])) storage rects,
+        mapping(uint256 => mapping(uint256 => Rect[])) storage rects,
         FileData calldata input
     ) internal {
         Rect[] storage storageFile = rects[input.lvl][input.file];
-        for (uint i = 0; i < input.rects.length; ++i) {
+        for (uint256 i = 0; i < input.rects.length; ++i) {
             storageFile.push(input.rects[i]);
         }
     }
 
     function getLvl(
-        mapping(uint => mapping(uint => Rect[])) storage rects,
-        uint lvl
-    ) internal view returns (mapping(uint => Rect[]) storage) {
+        mapping(uint256 => mapping(uint256 => Rect[])) storage rects,
+        uint256 lvl
+    ) internal view returns (mapping(uint256 => Rect[]) storage) {
         return rects[lvl];
     }
 
-    function to_lvl_1(uint l) internal pure returns (uint) {
+    function to_lvl_1(uint256 l) internal pure returns (uint256) {
         if (l > 0) --l;
         return l;
     }
 }
 
 library Converter {
-    function toString(uint value) internal pure returns (string memory) {
+    function toString(uint256 value) internal pure returns (string memory) {
         if (value == 0) {
             return "0";
         }
-        uint temp = value;
-        uint digits;
+        uint256 temp = value;
+        uint256 digits;
         while (temp != 0) {
             digits++;
             temp /= 10;
@@ -152,26 +151,26 @@ library RectLib {
     using RandLib for string[];
     using Converter for uint8;
 
-    function toSvg(
-        Rect memory r,
-        string memory color
-    ) internal pure returns (string memory) {
-        return
-            string(
-                abi.encodePacked(
-                    "<rect x='",
-                    r.x.toString(),
-                    "' y='",
-                    r.y.toString(),
-                    "' width='",
-                    r.width.toString(),
-                    "' height='",
-                    r.height.toString(),
-                    "' fill='",
-                    color,
-                    "'/>"
-                )
-            );
+    function toSvg(Rect memory r, string memory color)
+        internal
+        pure
+        returns (string memory)
+    {
+        return string(
+            abi.encodePacked(
+                "<rect x='",
+                r.x.toString(),
+                "' y='",
+                r.y.toString(),
+                "' width='",
+                r.width.toString(),
+                "' height='",
+                r.height.toString(),
+                "' fill='",
+                color,
+                "'/>"
+            )
+        );
     }
 
     function toSvg(
@@ -180,7 +179,7 @@ library RectLib {
         Rand memory rnd
     ) internal view returns (string memory) {
         string memory res;
-        for (uint i = 0; i < rects.length; ++i) {
+        for (uint256 i = 0; i < rects.length; ++i) {
             res = string(
                 abi.encodePacked(res, rects[i].toSvg(colors.random(rnd)))
             );
@@ -188,12 +187,13 @@ library RectLib {
         return res;
     }
 
-    function toSvg(
-        Rect[] storage rects,
-        string memory color
-    ) internal view returns (string memory) {
+    function toSvg(Rect[] storage rects, string memory color)
+        internal
+        view
+        returns (string memory)
+    {
         string memory res;
-        for (uint i = 0; i < rects.length; ++i) {
+        for (uint256 i = 0; i < rects.length; ++i) {
             res = string(abi.encodePacked(res, rects[i].toSvg(color)));
         }
         return res;
@@ -201,25 +201,25 @@ library RectLib {
 }
 
 contract Generator is Ownable {
-    using LayersLib for mapping(uint => mapping(uint => Rect[]));
-    using LayersLib for mapping(uint => string[]);
-    using LayersLib for uint;
+    using LayersLib for mapping(uint256 => mapping(uint256 => Rect[]));
+    using LayersLib for mapping(uint256 => string[]);
+    using LayersLib for uint256;
     using RectLib for Rect;
     using RectLib for Rect[];
     using RandLib for Rand;
     using RandLib for string[];
-    using Converter for uint;
+    using Converter for uint256;
 
     uint8 spores_count = 7;
     uint8[levelsCount] stemLevelCounts = [5, 5, 5, 6, 10];
     uint8[levelsCount] capLevelCounts = [5, 7, 10, 10, 10];
     uint8[levelsCount] dotLevelCounts = [5, 7, 10, 10, 10];
 
-    mapping(uint => Rect[]) spores;
-    mapping(uint => mapping(uint => Rect[])) stems;
-    mapping(uint => mapping(uint => Rect[])) caps;
-    mapping(uint => mapping(uint => Rect[])) dots;
-    mapping(uint => Rect[]) grounds;
+    mapping(uint256 => Rect[]) spores;
+    mapping(uint256 => mapping(uint256 => Rect[])) stems;
+    mapping(uint256 => mapping(uint256 => Rect[])) caps;
+    mapping(uint256 => mapping(uint256 => Rect[])) dots;
+    mapping(uint256 => Rect[]) grounds;
 
     string[] private backgroundColors0 = [
         "#000000",
@@ -277,14 +277,8 @@ contract Generator is Ownable {
         "#ffb2a7"
     ];
 
-    string[] private backgroundColors4 = [
-        "#0f0c45",
-        "#560e43",
-        "#b21030",
-        "#ff6e69",
-        "#534fed",
-        "#7cb8ff"
-    ];
+    string[] private backgroundColors4 =
+        ["#0f0c45", "#560e43", "#b21030", "#ff6e69", "#534fed", "#7cb8ff"];
 
     string[] private groundColors0 = [
         "#000000",
@@ -343,14 +337,8 @@ contract Generator is Ownable {
         "#ffffff"
     ];
 
-    string[] private groundColors4 = [
-        "#663a13",
-        "#137d5a",
-        "#974700",
-        "#49aa10",
-        "#99ba5a",
-        "#ade151"
-    ];
+    string[] private groundColors4 =
+        ["#663a13", "#137d5a", "#974700", "#49aa10", "#99ba5a", "#ade151"];
 
     string[] private mushroomColors0 = [
         "#000000",
@@ -409,14 +397,8 @@ contract Generator is Ownable {
         "#ffffff"
     ];
 
-    string[] private mushroomColors4 = [
-        "#663a13",
-        "#137d5a",
-        "#974700",
-        "#49aa10",
-        "#99ba5a",
-        "#ade151"
-    ];
+    string[] private mushroomColors4 =
+        ["#663a13", "#137d5a", "#974700", "#49aa10", "#99ba5a", "#ade151"];
 
     constructor() {
         grounds[0].push(Rect(0, 17, 24, 7));
@@ -425,9 +407,11 @@ contract Generator is Ownable {
         grounds[1].push(Rect(0, 18, 24, 1));
     }
 
-    function backgroundColors(
-        uint index
-    ) private view returns (string[] storage) {
+    function backgroundColors(uint256 index)
+        private
+        view
+        returns (string[] storage)
+    {
         if (index == 0) return backgroundColors0;
         if (index == 1) return backgroundColors1;
         if (index == 2) return backgroundColors2;
@@ -436,7 +420,11 @@ contract Generator is Ownable {
         return backgroundColors0;
     }
 
-    function groundColors(uint index) private view returns (string[] storage) {
+    function groundColors(uint256 index)
+        private
+        view
+        returns (string[] storage)
+    {
         if (index == 0) return groundColors0;
         if (index == 1) return groundColors1;
         if (index == 2) return groundColors2;
@@ -445,9 +433,11 @@ contract Generator is Ownable {
         return groundColors0;
     }
 
-    function mushroomColors(
-        uint index
-    ) private view returns (string[] storage) {
+    function mushroomColors(uint256 index)
+        private
+        view
+        returns (string[] storage)
+    {
         if (index == 0) return mushroomColors0;
         if (index == 1) return mushroomColors1;
         if (index == 2) return mushroomColors2;
@@ -457,10 +447,10 @@ contract Generator is Ownable {
     }
 
     function setSpores(FileData[] calldata data) external onlyOwner {
-        for (uint i = 0; i < data.length; ++i) {
+        for (uint256 i = 0; i < data.length; ++i) {
             FileData memory file = data[i];
             Rect[] storage storageFile = spores[file.file];
-            for (uint j = 0; j < file.rects.length; ++j) {
+            for (uint256 j = 0; j < file.rects.length; ++j) {
                 storageFile.push(file.rects[j]);
             }
         }
@@ -478,12 +468,12 @@ contract Generator is Ownable {
         dots.setLayers(data);
     }
 
-    function toString(uint value) private pure returns (string memory) {
+    function toString(uint256 value) private pure returns (string memory) {
         if (value == 0) {
             return "0";
         }
-        uint temp = value;
-        uint digits;
+        uint256 temp = value;
+        uint256 digits;
         while (temp != 0) {
             digits++;
             temp /= 10;
@@ -497,19 +487,25 @@ contract Generator is Ownable {
         return string(buffer);
     }
 
-    function setBcGround(
-        MushroomData memory data,
-        Rand memory rnd
-    ) private view {
+    function setBcGround(MushroomData memory data, Rand memory rnd)
+        private
+        view
+    {
         data.background = backgroundColors(rnd.lvl().to_lvl_1()).random(rnd);
     }
 
-    function setGround(MushroomData memory data, Rand memory rnd) private view {
+    function setGround(MushroomData memory data, Rand memory rnd)
+        private
+        view
+    {
         data.ground = rnd.next() % groundsCount;
         data.groundColor = groundColors(rnd.lvl().to_lvl_1()).random(rnd);
     }
 
-    function setSpores(MushroomData memory data, Rand memory rnd) private view {
+    function setSpores(MushroomData memory data, Rand memory rnd)
+        private
+        view
+    {
         data.stem = rnd.next() % spores_count;
         data.stemColor = mushroomColors(rnd.lvl().to_lvl_1()).random(rnd);
     }
@@ -528,9 +524,11 @@ contract Generator is Ownable {
         }
     }
 
-    function getMushroom(
-        SeedData calldata seed_data
-    ) external view returns (MushroomData memory) {
+    function getMushroom(SeedData calldata seed_data)
+        external
+        view
+        returns (MushroomData memory)
+    {
         Rand memory rnd = Rand(seed_data.seed, 0, seed_data.extra);
         MushroomData memory data;
         data.lvl = rnd.lvl();
@@ -545,27 +543,25 @@ contract Generator is Ownable {
         return data;
     }
 
-    function getSvg(
-        SeedData calldata seed_data
-    ) external view returns (string memory) {
+    function getSvg(SeedData calldata seed_data)
+        external
+        view
+        returns (string memory)
+    {
         return toSvg(this.getMushroom(seed_data));
     }
 
-    function getMeta(
-        SeedData calldata seed_data
-    ) external view returns (string memory) {
+    function getMeta(SeedData calldata seed_data)
+        external
+        view
+        returns (string memory)
+    {
         MushroomData memory data = this.getMushroom(seed_data);
         bytes memory lvl = abi.encodePacked('"level":', data.lvl.toString());
-        bytes memory background = abi.encodePacked(
-            ',"background":"',
-            data.background,
-            '"'
-        );
-        bytes memory ground = abi.encodePacked(
-            ',"groundColor":"',
-            data.groundColor,
-            '"'
-        );
+        bytes memory background =
+            abi.encodePacked(',"background":"', data.background, '"');
+        bytes memory ground =
+            abi.encodePacked(',"groundColor":"', data.groundColor, '"');
         bytes memory stem = abi.encodePacked(
             ',"stem":',
             data.stem.toString(),
@@ -574,11 +570,7 @@ contract Generator is Ownable {
             '"'
         );
         bytes memory cap = abi.encodePacked(
-            ',"cap":',
-            data.cap.toString(),
-            ',"capColor":"',
-            data.capColor,
-            '"'
+            ',"cap":', data.cap.toString(), ',"capColor":"', data.capColor, '"'
         );
         bytes memory capDots = abi.encodePacked(
             ',"hasDots":',
@@ -588,24 +580,18 @@ contract Generator is Ownable {
             '"'
         );
 
-        return
-            string(
-                abi.encodePacked(
-                    "{",
-                    lvl,
-                    background,
-                    ground,
-                    stem,
-                    cap,
-                    capDots,
-                    "}"
-                )
-            );
+        return string(
+            abi.encodePacked(
+                "{", lvl, background, ground, stem, cap, capDots, "}"
+            )
+        );
     }
 
-    function toSvg(
-        MushroomData memory data
-    ) private view returns (string memory) {
+    function toSvg(MushroomData memory data)
+        private
+        view
+        returns (string memory)
+    {
         bytes memory svgStart = abi.encodePacked(
             "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0",
             " ",
@@ -616,61 +602,65 @@ contract Generator is Ownable {
         );
 
         if (data.lvl == 0) {
-            return
-                string(
-                    abi.encodePacked(
-                        svgStart,
-                        backgroundSvg(data),
-                        groundSvg(data),
-                        stemSvg(data),
-                        "</svg>"
-                    )
-                );
+            return string(
+                abi.encodePacked(
+                    svgStart,
+                    backgroundSvg(data),
+                    groundSvg(data),
+                    stemSvg(data),
+                    "</svg>"
+                )
+            );
         } else {
-            return
-                string(
-                    abi.encodePacked(
-                        svgStart,
-                        backgroundSvg(data),
-                        groundSvg(data),
-                        stemSvg(data),
-                        capSvg(data),
-                        "</svg>"
-                    )
-                );
+            return string(
+                abi.encodePacked(
+                    svgStart,
+                    backgroundSvg(data),
+                    groundSvg(data),
+                    stemSvg(data),
+                    capSvg(data),
+                    "</svg>"
+                )
+            );
         }
     }
 
-    function backgroundSvg(
-        MushroomData memory data
-    ) private pure returns (string memory) {
+    function backgroundSvg(MushroomData memory data)
+        private
+        pure
+        returns (string memory)
+    {
         Rect memory r = Rect(0, 0, pixelsCount, pixelsCount);
         return r.toSvg(data.background);
     }
 
-    function groundSvg(
-        MushroomData memory data
-    ) private view returns (string memory) {
+    function groundSvg(MushroomData memory data)
+        private
+        view
+        returns (string memory)
+    {
         return grounds[data.ground].toSvg(data.groundColor);
     }
 
-    function stemSvg(
-        MushroomData memory data
-    ) private view returns (string memory) {
+    function stemSvg(MushroomData memory data)
+        private
+        view
+        returns (string memory)
+    {
         if (data.lvl == 0) return spores[data.stem].toSvg(data.stemColor);
         return stems[data.lvl.to_lvl_1()][data.stem].toSvg(data.stemColor);
     }
 
-    function capSvg(
-        MushroomData memory data
-    ) private view returns (string memory) {
-        string memory cap = caps[data.lvl.to_lvl_1()][data.cap].toSvg(
-            data.capColor
-        );
+    function capSvg(MushroomData memory data)
+        private
+        view
+        returns (string memory)
+    {
+        string memory cap =
+            caps[data.lvl.to_lvl_1()][data.cap].toSvg(data.capColor);
         if (data.hasDots) {
-            string memory dotsSvg = dots[data.lvl.to_lvl_1()][data.cap].toSvg(
-                data.dotsColor
-            );
+            string memory dotsSvg =
+                dots[data.lvl.to_lvl_1()][data.cap].toSvg(data.dotsColor);
             return string(abi.encodePacked(cap, dotsSvg));
         } else {
             return string(cap);
