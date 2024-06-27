@@ -295,7 +295,7 @@ contract Generator is Ownable {
         data.groundColor =
             _groundColors(level).safeRdmItemAtIndex((rdm >> 0x10) & 0xff);
 
-        if (data.lvl == 0) {
+        if (data.lvl == uint256(0)) {
             // sets spores
             data.stem = uint8(((rdm >> 0x18) & 0xff) % _SPORES_COUNT);
             data.stemColor =
@@ -389,11 +389,11 @@ contract Generator is Ownable {
         view
         returns (bytes3[] storage)
     {
-        if (index == 0) return _backgroundColors0;
-        if (index == 1) return _backgroundColors1;
-        if (index == 2) return _backgroundColors2;
-        if (index == 3) return _backgroundColors3;
-        if (index == 4) return _backgroundColors4;
+        if (index == uint256(0)) return _backgroundColors0;
+        if (index == uint256(1)) return _backgroundColors1;
+        if (index == uint256(2)) return _backgroundColors2;
+        if (index == uint256(3)) return _backgroundColors3;
+        if (index == uint256(4)) return _backgroundColors4;
 
         return _backgroundColors0;
     }
@@ -403,11 +403,11 @@ contract Generator is Ownable {
         view
         returns (bytes3[] storage)
     {
-        if (index == 0) return _groundColors0;
-        if (index == 1) return _groundColors1;
-        if (index == 2) return _groundColors2;
-        if (index == 3) return _groundColors3;
-        if (index == 4) return _groundColors4;
+        if (index == uint256(0)) return _groundColors0;
+        if (index == uint256(1)) return _groundColors1;
+        if (index == uint256(2)) return _groundColors2;
+        if (index == uint256(3)) return _groundColors3;
+        if (index == uint256(4)) return _groundColors4;
 
         return _groundColors0;
     }
@@ -417,11 +417,11 @@ contract Generator is Ownable {
         view
         returns (bytes3[] storage)
     {
-        if (index == 0) return _mushroomColors0;
-        if (index == 1) return _mushroomColors1;
-        if (index == 2) return _mushroomColors2;
-        if (index == 3) return _mushroomColors3;
-        if (index == 4) return _mushroomColors4;
+        if (index == uint256(0)) return _mushroomColors0;
+        if (index == uint256(1)) return _mushroomColors1;
+        if (index == uint256(2)) return _mushroomColors2;
+        if (index == uint256(3)) return _mushroomColors3;
+        if (index == uint256(4)) return _mushroomColors4;
 
         return _mushroomColors0;
     }
@@ -441,7 +441,7 @@ contract Generator is Ownable {
             "'>"
         );
 
-        if (data.lvl == 0) {
+        if (data.lvl == uint256(0)) {
             return string(
                 abi.encodePacked(
                     svgStart,
@@ -488,7 +488,7 @@ contract Generator is Ownable {
         view
         returns (string memory)
     {
-        if (data.lvl == 0) return _spores[data.stem].toSvg(data.stemColor);
+        if (data.lvl == uint256(0)) return _spores[data.stem].toSvg(data.stemColor);
 
         return _stems[data.lvl.toLvl1()][data.stem].toSvg(data.stemColor);
     }

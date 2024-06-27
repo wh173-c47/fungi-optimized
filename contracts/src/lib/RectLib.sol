@@ -62,7 +62,7 @@ library RectLib {
         string memory res;
         uint256 max = rects.length;
 
-        for (uint256 i = 0; i < max; ++i) {
+        for (uint256 i; i < max; ++i) {
             res = string(abi.encodePacked(res, rects[i].toSvg(color)));
         }
 

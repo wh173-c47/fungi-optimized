@@ -27,7 +27,7 @@ abstract contract Mushrooms is PoolCreatableErc20i {
     mapping(address owner => mapping(uint256 tokenId => uint256)) internal
         _ownedTokensIndex;
     mapping(address owner => mapping(uint256 => bool)) internal _owns;
-    mapping(uint256 index => address user) _holderList;
+    mapping(uint256 index => address user) internal _holderList;
     // Below should be way enough, could probably pack more
     uint72 public mushroomsTotalCount;
     uint72 public sporesTotalCount;
@@ -69,7 +69,7 @@ abstract contract Mushrooms is PoolCreatableErc20i {
     {
         address[] memory holders = new address[](count);
 
-        for (uint256 i = 0; i < count; ++i) {
+        for (uint256 i; i < count; ++i) {
             holders[i] = getHolderByIndex(startIndex + i);
         }
 
@@ -121,17 +121,17 @@ abstract contract Mushrooms is PoolCreatableErc20i {
 
         {
             uint256 scale;
-            uint32 seed;
+            uint256 seed;
 
             {
                 scale = 10 ** decimals();
-                seed = uint32(amount / scale);
+                seed = amount / scale;
 
-                if (seed > 0 && from != cachedPool && to != cachedPool) {
+                if (seed > uint256(0) && from != cachedPool && to != cachedPool) {
                     SeedData memory fromSpores = _holdersData[from].spores;
                     // transfer growing mushroom
                     if (fromSpores.seed == seed) {
-                        _removeSeedCount(from, seed);
+                        if (seed > uint256(0)) _removeSeedCount(from, seed);
                         _addTokenToOwnerEnumeration(to, fromSpores);
 
                         emit OnMushroomTransfer(from, to, fromSpores);
@@ -143,7 +143,7 @@ abstract contract Mushrooms is PoolCreatableErc20i {
                         SeedData memory data =
                             _ownedTokens[from][_ownedTokensIndex[from][seed]];
 
-                        _removeTokenFromOwnerEnumeration(from, seed);
+                        _removeTokenFromOwnerEnumeration(from, uint32(seed));
                         _addTokenToOwnerEnumeration(to, data);
 
                         emit OnMushroomTransfer(from, to, data);
@@ -156,12 +156,13 @@ abstract contract Mushrooms is PoolCreatableErc20i {
             {
                 uint256 fromBalance = balanceOf(from);
                 // transfer spores
-                uint32 lastBalanceFromSeed = uint32(fromBalance / scale);
-                uint32 newBalanceFromSeed =
-                    uint32((fromBalance - amount) / scale);
+                uint256 nextFromSeed = fromBalance / scale - (fromBalance - amount) / scale;
 
-                _removeSeedCount(from, lastBalanceFromSeed - newBalanceFromSeed);
-                _addSeedCount(to, seed);
+                if (from != cachedPool && nextFromSeed > uint256(0))
+                    _removeSeedCount(from, nextFromSeed);
+
+                if (to != cachedPool && seed > uint256(0))
+                    _addSeedCount(to, seed);
             }
         }
 
@@ -171,7 +172,7 @@ abstract contract Mushrooms is PoolCreatableErc20i {
 
             // from is no longer holder
             if (checkFrom && !_isHolder(from)) {
-                if (localHolderCount > 0) {
+                if (localHolderCount > uint256(0)) {
                     localHolderCount -= 1;
 
                     _holderList[_holdersData[from].listIndex] =
@@ -191,21 +192,16 @@ abstract contract Mushrooms is PoolCreatableErc20i {
                 localHolderCount = localHolderCount + 1;
             }
 
-            console.log("local holder count", localHolderCount);
-            console.log("from balance", balanceOf(from));
-
             if (localHolderCount != tmpCheck) {
                 holdersCount = uint72(localHolderCount);
             }
         }
     }
 
-    function _addSeedCount(address account, uint32 seed) private {
-        if (seed == uint256(0) || account == pool) return;
-
+    function _addSeedCount(address account, uint256 seed) private {
         SeedData memory last = _holdersData[account].spores;
-        uint32 nextSeed = last.seed + seed;
-        SeedData memory next = SeedData(nextSeed, account.extra());
+        uint256 nextSeed = last.seed + seed;
+        SeedData memory next = SeedData(uint32(nextSeed), account.extra());
 
         _holdersData[account].spores = next;
 
@@ -216,19 +212,17 @@ abstract contract Mushrooms is PoolCreatableErc20i {
         emit OnSporesGrow(account, next);
     }
 
-    function _removeSeedCount(address account, uint32 seed) private {
-        if (seed == 0 || account == pool) return;
-
+    function _removeSeedCount(address account, uint256 seed) private {
         SeedData memory lastSpores = _holdersData[account].spores;
 
         if (lastSpores.seed >= seed) {
-            uint32 earlyNextSeed = lastSpores.seed - seed;
+            uint256 earlyNextSeed = lastSpores.seed - seed;
             SeedData memory earlyNextSeedData =
-                SeedData(earlyNextSeed, lastSpores.extra);
+                SeedData(uint32(earlyNextSeed), lastSpores.extra);
 
             _holdersData[account].spores = earlyNextSeedData;
 
-            if (lastSpores.seed > 0 && earlyNextSeed == 0) {
+            if (lastSpores.seed > uint256(0) && earlyNextSeed == uint256(0)) {
                 --sporesTotalCount;
             }
 
@@ -237,34 +231,32 @@ abstract contract Mushrooms is PoolCreatableErc20i {
             return;
         }
 
-        uint32 seedRemains = seed - lastSpores.seed;
+        uint256 seedRemains = seed - lastSpores.seed;
 
         // remove mushrooms
-        uint32 removed;
+        uint256 removed;
 
         {
             uint256 count = _holdersData[account].counts;
 
             for (uint256 i; i < count && removed < seedRemains; ++i) {
-                uint32 removedSeed = _ownedTokens[account][i].seed;
-
-                _removeTokenFromOwnerEnumeration(account, removedSeed);
+                _removeTokenFromOwnerEnumeration(account, _ownedTokens[account][0].seed);
 
                 removed += seed;
             }
         }
 
-        uint32 nextSeed;
+        uint256 nextSeed;
 
         if (removed > seedRemains) {
             nextSeed = lastSpores.seed + removed - seedRemains;
         }
 
-        SeedData memory nextSeedData = SeedData(nextSeed, account.extra());
+        SeedData memory nextSeedData = SeedData(uint32(nextSeed), account.extra());
 
         _holdersData[account].spores = nextSeedData;
 
-        if (lastSpores.seed > 0 && nextSeed == 0) --sporesTotalCount;
+        if (lastSpores.seed > uint256(0) && nextSeed == uint256(0)) --sporesTotalCount;
 
         emit OnSporesShrink(account, nextSeedData);
     }
@@ -272,8 +264,6 @@ abstract contract Mushrooms is PoolCreatableErc20i {
     function _addTokenToOwnerEnumeration(address to, SeedData memory data)
         private
     {
-        if (to == pool) return;
-
         uint256 cachedCount = _holdersData[to].counts;
 
         _holdersData[to].counts = uint48(cachedCount + 1);
@@ -286,28 +276,24 @@ abstract contract Mushrooms is PoolCreatableErc20i {
     function _removeTokenFromOwnerEnumeration(address from, uint32 seed)
         private
     {
-        if (from == pool) return;
-
         uint256 nextCount = _holdersData[from].counts - 1;
 
         _holdersData[from].counts = uint48(nextCount);
         --mushroomsTotalCount;
         _owns[from][seed] = false;
 
-        uint256 lastTokenIndex = nextCount;
         uint256 tokenIndex = _ownedTokensIndex[from][seed];
-        SeedData memory data = _ownedTokens[from][tokenIndex];
 
         // When the token to delete is the last token, the swap operation is unnecessary
-        if (tokenIndex != lastTokenIndex) {
-            SeedData memory lastTokenId = _ownedTokens[from][lastTokenIndex];
+        if (tokenIndex != nextCount) {
+            SeedData memory lastTokenId = _ownedTokens[from][nextCount];
 
             _ownedTokens[from][tokenIndex] = lastTokenId; // Move the last token to the slot of the to-delete token
             _ownedTokensIndex[from][lastTokenId.seed] = tokenIndex; // Update the moved token's index
         }
 
-        delete _ownedTokensIndex[from][data.seed];
-        delete _ownedTokens[from][lastTokenIndex];
+        delete _ownedTokensIndex[from][_ownedTokens[from][tokenIndex].seed];
+        delete _ownedTokens[from][nextCount];
     }
 }
 
