@@ -488,7 +488,9 @@ contract Generator is Ownable {
         view
         returns (string memory)
     {
-        if (data.lvl == uint256(0)) return _spores[data.stem].toSvg(data.stemColor);
+        if (data.lvl == uint256(0)) {
+            return _spores[data.stem].toSvg(data.stemColor);
+        }
 
         return _stems[data.lvl.toLvl1()][data.stem].toSvg(data.stemColor);
     }

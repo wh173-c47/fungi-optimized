@@ -1,13 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.25;
 
-import {console} from "forge-std/Test.sol";
 import {ERC20, PoolCreatableErc20i} from "./PoolCreatableErc20i.sol";
 import {Generator} from "../Generator.sol";
 import {ExtraSeedLib} from "../lib/ExtraSeedLib.sol";
 import {SeedData} from "../lib/Types.sol";
 
-// Here as there are already much writes, all the holder logic has been removed as those can be fetched through APIs / TheGraph
+// TODO: Try defining custom mapping storage instead, sparing on stack + keccak
 abstract contract Mushrooms is PoolCreatableErc20i {
     using ExtraSeedLib for address;
 
@@ -21,12 +20,11 @@ abstract contract Mushrooms is PoolCreatableErc20i {
     }
 
     mapping(address owner => HolderData) internal _holdersData;
-    // TODO: See if able to combine those, why using 2 addr => tokenid => index => seed see if any point in it
     mapping(address owner => mapping(uint256 index => SeedData _seedData))
         internal _ownedTokens;
-    mapping(address owner => mapping(uint256 tokenId => uint256)) internal
+    mapping(address owner => mapping(uint256 seed => uint256)) internal
         _ownedTokensIndex;
-    mapping(address owner => mapping(uint256 => bool)) internal _owns;
+    mapping(address owner => mapping(uint256 seed => bool)) internal _owns;
     mapping(uint256 index => address user) internal _holderList;
     // Below should be way enough, could probably pack more
     uint72 public mushroomsTotalCount;
@@ -109,17 +107,19 @@ abstract contract Mushrooms is PoolCreatableErc20i {
     {
         if (from == address(this)) return;
 
-        address cachedPool = pool;
-        bool checkFrom =
-            !(from == address(this) || from == cachedPool || from == address(0));
-        bool checkTo =
-            !(to == address(this) || to == cachedPool || to == address(0));
-
+        bool checkFrom;
+        bool checkTo;
         bool beforeTo;
 
-        if (!checkTo) beforeTo = _isHolder(to);
-
         {
+            address cachedPool = pool;
+
+            checkFrom = !(from == address(this) || from == cachedPool || from == address(0));
+            checkTo =
+                !(to == address(this) || to == cachedPool || to == address(0));
+
+            if (!checkTo) beforeTo = _isHolder(to);
+
             uint256 scale;
             uint256 seed;
 
@@ -127,7 +127,8 @@ abstract contract Mushrooms is PoolCreatableErc20i {
                 scale = 10 ** decimals();
                 seed = amount / scale;
 
-                if (seed > uint256(0) && from != cachedPool && to != cachedPool) {
+                if (seed > uint256(0) && from != cachedPool && to != cachedPool)
+                {
                     SeedData memory fromSpores = _holdersData[from].spores;
                     // transfer growing mushroom
                     if (fromSpores.seed == seed) {
@@ -151,18 +152,19 @@ abstract contract Mushrooms is PoolCreatableErc20i {
                         return;
                     }
                 }
-            }
 
-            {
                 uint256 fromBalance = balanceOf(from);
                 // transfer spores
-                uint256 nextFromSeed = fromBalance / scale - (fromBalance - amount) / scale;
+                uint256 nextFromSeed =
+                    fromBalance / scale - (fromBalance - amount) / scale;
 
-                if (from != cachedPool && nextFromSeed > uint256(0))
+                if (from != cachedPool && nextFromSeed > uint256(0)) {
                     _removeSeedCount(from, nextFromSeed);
+                }
 
-                if (to != cachedPool && seed > uint256(0))
+                if (to != cachedPool && seed > uint256(0)) {
                     _addSeedCount(to, seed);
+                }
             }
         }
 
@@ -214,15 +216,16 @@ abstract contract Mushrooms is PoolCreatableErc20i {
 
     function _removeSeedCount(address account, uint256 seed) private {
         SeedData memory lastSpores = _holdersData[account].spores;
+        uint256 lastSeed = lastSpores.seed;
 
-        if (lastSpores.seed >= seed) {
-            uint256 earlyNextSeed = lastSpores.seed - seed;
+        if (lastSeed >= seed) {
+            uint256 earlyNextSeed = lastSeed - seed;
             SeedData memory earlyNextSeedData =
                 SeedData(uint32(earlyNextSeed), lastSpores.extra);
 
             _holdersData[account].spores = earlyNextSeedData;
 
-            if (lastSpores.seed > uint256(0) && earlyNextSeed == uint256(0)) {
+            if (lastSeed > uint256(0) && earlyNextSeed == uint256(0)) {
                 --sporesTotalCount;
             }
 
@@ -231,7 +234,7 @@ abstract contract Mushrooms is PoolCreatableErc20i {
             return;
         }
 
-        uint256 seedRemains = seed - lastSpores.seed;
+        uint256 seedRemains = seed - lastSeed;
 
         // remove mushrooms
         uint256 removed;
@@ -240,7 +243,9 @@ abstract contract Mushrooms is PoolCreatableErc20i {
             uint256 count = _holdersData[account].counts;
 
             for (uint256 i; i < count && removed < seedRemains; ++i) {
-                _removeTokenFromOwnerEnumeration(account, _ownedTokens[account][0].seed);
+                _removeTokenFromOwnerEnumeration(
+                    account, _ownedTokens[account][0].seed
+                );
 
                 removed += seed;
             }
@@ -249,14 +254,17 @@ abstract contract Mushrooms is PoolCreatableErc20i {
         uint256 nextSeed;
 
         if (removed > seedRemains) {
-            nextSeed = lastSpores.seed + removed - seedRemains;
+            nextSeed = lastSeed + removed - seedRemains;
         }
 
-        SeedData memory nextSeedData = SeedData(uint32(nextSeed), account.extra());
+        SeedData memory nextSeedData =
+            SeedData(uint32(nextSeed), account.extra());
 
         _holdersData[account].spores = nextSeedData;
 
-        if (lastSpores.seed > uint256(0) && nextSeed == uint256(0)) --sporesTotalCount;
+        if (lastSeed > uint256(0) && nextSeed == uint256(0)) {
+            --sporesTotalCount;
+        }
 
         emit OnSporesShrink(account, nextSeedData);
     }

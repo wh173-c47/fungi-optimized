@@ -108,7 +108,9 @@ contract FungiOldOldTest is Test {
     function testTransferGrowsAndShrinkSporesIfTransferringMoreThanOneToken(
         uint256 amount
     ) public {
-        vm.assume(amount >= 10 ** fungi.decimals() && amount < _START_TOTAL_SUPPLY);
+        vm.assume(
+            amount >= 10 ** fungi.decimals() && amount < _START_TOTAL_SUPPLY
+        );
 
         uint256 amountPlain = amount / (10 ** fungi.decimals());
 
@@ -132,7 +134,9 @@ contract FungiOldOldTest is Test {
 
         assertEq(afterTo.seed, amountPlain);
         assertNotEq(afterTo.extra, 0);
-        assertEq(afterFrom.seed, (fromBalance - amount) / (10 ** fungi.decimals()));
+        assertEq(
+            afterFrom.seed, (fromBalance - amount) / (10 ** fungi.decimals())
+        );
         assertEq(afterFrom.extra, beforeFrom.extra);
     }
 
@@ -162,7 +166,9 @@ contract FungiOldOldTest is Test {
     function testTransferMushroomIfTransferringAllTokens(uint256 amount)
         public
     {
-        vm.assume(amount >= 10 ** fungi.decimals() && amount < _START_TOTAL_SUPPLY);
+        vm.assume(
+            amount >= 10 ** fungi.decimals() && amount < _START_TOTAL_SUPPLY
+        );
 
         fungi.launch(PAIR);
         fungi.transfer(RDM_ACCOUNT, amount);
@@ -186,7 +192,9 @@ contract FungiOldOldTest is Test {
     function testTransferMushroomIfTransferringAllTokensToSelf(uint256 amount)
         public
     {
-        vm.assume(amount >= 10 ** fungi.decimals() && amount < _START_TOTAL_SUPPLY);
+        vm.assume(
+            amount >= 10 ** fungi.decimals() && amount < _START_TOTAL_SUPPLY
+        );
 
         fungi.launch(PAIR);
         fungi.transfer(RDM_ACCOUNT, amount);
@@ -210,7 +218,8 @@ contract FungiOldOldTest is Test {
         uint256 amount
     ) public {
         vm.assume(
-            amount > 4 * 10 ** fungi.decimals() && amount < _START_TOTAL_SUPPLY && amount % 2 == 0
+            amount > 4 * 10 ** fungi.decimals() && amount < _START_TOTAL_SUPPLY
+                && amount % 2 == 0
         );
 
         uint256 intermediateAmount = amount / 2;
